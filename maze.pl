@@ -29,7 +29,7 @@ eulerCellsRow1([ eulerCell(1, cell(n, n)),
 		eulerCell(1, cell(y, n)),
 		eulerCell(2, cell(n, n)),
 		eulerCell(2, cell(n, n)),
-		eulerCell(2, cell(n, y)),
+		eulerCell(2, cell(n, n)),
 		eulerCell(2, cell(y, n)),
 		eulerCell(3, cell(n, n)) ]).
 
@@ -71,55 +71,79 @@ setBorders(BorderFreeRow,Row):-
 % determinated function
 setRightBorders([X],[X]):-!.
 setRightBorders([eulerCell(Index1,cell(n,Y)),eulerCell(Index2,cell(n,Z))|Rest],
-	   [eulerCell(Index1,cell(R,Y))|BorderedRest]):-
+	   [eulerCell(Index1,cell(R,Y)),eulerCell(Index2,cell(R1,Z))|BorderedRest]):-
 	(   Index1=Index2,R=n ; Index1\=Index2,R=y),
-	setRightBorders([eulerCell(Index2,cell(n,Z))|Rest],BorderedRest),!.
-
+	setRightBorders([eulerCell(Index2,cell(n,Z))|Rest],[eulerCell(Index2,cell(R1,Z))|BorderedRest]),!.
 
 setBottomBorders([X],[X]):-!.
-setBottomBorders(Before,After):-
+setBottomBorders([G|R],[RG|R1]):-
+	sameIndexGroup([G|R],R,G,_),
+	randomizeGroup(R,RG),
+	setBottomBorders(R,R1).
+
+setBottomBorders1([X],[X]):-!.
+setBottomBorders1(Before,After):-
 	findall(Cells,sameIndexCells(Before,_,Cells),SameGroups),
 	setBottomBordersHelper(SameGroups,SameGroupsWithBorders),
 	flatten(SameGroupsWithBorders,After).
 
-setBottomBordersHelper([],[]):-!.
-setBottomBordersHelper([X|Y],[X1|Y1]):-
-	randomizeGroups(X,X1),
-	setBottomBordersHelper(Y,Y1).
+setBottomBorders1Helper([],[]):-!.
+setBottomBorders1Helper([X|Y],[X1|Y1]):-
+	randomizeGroup(X,X1),
+	setBottomBorders1Helper(Y,Y1).
 
-randomizeGroups([],_):-!.
-randomizeGroups(X,Y):-
+testRandomize([eulerCell(1,cell(n,n)),eulerCell(1,cell(n,n)),
+	       eulerCell(1,cell(y,n))]).
+
+testRandomize1([eulerCell(1,cell(n,y)),eulerCell(1,cell(n,n)),
+	       eulerCell(1,cell(y,y))]).
+
+test([X],[X],1):-!.
+test(X,Y,N):-
+   length(X,N),
+   length(Y,N).
+
+testSetBottom([eulerCell(1, cell(y, n)), eulerCell(4, cell(n, n)), eulerCell(4, cell(n, n)), eulerCell(4, cell(y, n)), eulerCell(5, cell(y, n)), eulerCell(6, cell(y, n)), eulerCell(7, cell(n, n))]).
+
+%randomizeGroup(?Group,?RandomizedBorderedGroup)
+%
+randomizeGroup([X],[X]):-!.
+randomizeGroup(X,Y):-
+	length(Y,N),
 	length(X,N),
 	N1 is N+1,
 	random(1,N1,NnoBorder),
 	randset(NnoBorder,N,NoBorderIndexes),
 	getMask(N,NoBorderIndexes,BorderMask),
-	installRandomizedBottomBorders(X,BorderMask,Y).
-
-getMask(N,I,L):-reverse(L,L1),getMaskH(N,I,L1).
+	installBottomBorders(X,BorderMask,Y).
+%getMask(?MaskSize,?IndexesNoBorder,?MaskArray)
+%ex.:getMask(4,[2,3],X)->X=[y,n,n,y]
+%
+getMask(N,I,L):-getMaskH(N,I,L1),reverse(L,L1).
 
 getMaskH(0,_,[]):-!.
 getMaskH(N,I,[X|Y]):-
 	member(N,I),
 	N1 is N-1,
 	X=n,
-	getMask(N1,I,Y),!.
+	getMaskH(N1,I,Y),!.
 
 getMaskH(N,I,[X|Y]):-
 	%\+ member(N,I),
 	N1 is N-1,
 	X=y,
-	getMask(N1,I,Y).
+	getMaskH(N1,I,Y).
 
 
-
-installRandomizedBottomBorders([],_,[]):-!.
-installRandomizedBottomBorders([eulerCell(Index,cell(R,n))|X],
+%installBottomBorders(?Row,?Mask,?BorderedRow)
+%
+installBottomBorders([],[],[]):-!.
+installBottomBorders([eulerCell(Index,cell(R,n))|X],
 			       [HaveBorders|M],
 			       [eulerCell(Index,cell(R,HaveBorders))|Y]):-
-	installRandomizedBottomBorders(X,M,Y).
+	installBottomBorders(X,M,Y).
 
-
+%archive
 sameIndexCells([],_,[]):-!.
 sameIndexCells([eulerCell(Index,CellInfo)|Rest],Index,
 	       [eulerCell(Index,CellInfo)|RestCells]):-
@@ -128,8 +152,85 @@ sameIndexCells([eulerCell(Index1,_)|Rest],Index,RestCells):-
 	sameIndexCells(Rest,Index,RestCells)
 	,Index1\=Index.
 
+%sameIndexGroup1(?List,?Rest,?Group,?Index) //archive
+sameIndexGroup1([],[],[],_):-!.
+sameIndexGroup1([eulerCell(I1,Cell)|L],[eulerCell(I1,Cell)|L],[],I):-
+	I1\=I,!.
+sameIndexGroup1([eulerCell(I,Cell)|L1],R1,[eulerCell(I,Cell)|G1],I):-
+	sameIndexGroup1(L1,R1,G1,I).
 
 
+%sameIndexGroup(?List,?Rest,?Group,?Index)
+%
+sameIndexGroup(L,R,G,I):-
+	sameIndexGroupH(L,R,G,I,no).
+sameIndexGroupH([],[],[],_,_):-!.
+sameIndexGroupH([eulerCell(I,Cell)|L1],R1,[eulerCell(I,Cell)|G1],I,_):-
+	sameIndexGroupH(L1,R1,G1,I,yes).
+sameIndexGroupH([eulerCell(I1,Cell)|L],[eulerCell(I1,Cell)|L],[],I,yes):-
+	I1\=I,!.
+sameIndexGroupH([eulerCell(I1,Cell)|L],R,G,I,no):-
+	isIndex(I,[eulerCell(I1,Cell)|L]),
+	I1\=I,
+	sameIndexGroupH(L,R,G,I,no).
+
+eulerToSet(E,S):-
+	maplist(cellIndex,E,L),
+	list_to_set(L,S).
+isIndex(I,E):-
+	eulerToSet(E,S),
+	member(I,S).
+
+cellIndex(eulerCell(I,_),I).
+
+
+%maxIndex(?eulerList,?maxMember)
+%
+maxIndex(Max,E):-
+	eulerToSet(E,S),
+	max_member(Max,S).
+
+%newRow(?Row,?NewRow)
+%
+newRow(R,Rnew):-
+	newRowIndexes(R,R1),
+	setBorders(R1,Rnew).
+
+newRowIndexes([],[]):-!.
+newRowIndexes([eulerCell(Index,cell(_,n))|R],[eulerCell(Index,cell(n,n))|R1]):-
+	maxIndex(Max,[eulerCell(Index,cell(_,n))|R]),
+	newRowIndexesH(R,R1,Max,Index,n),!.
+newRowIndexes([eulerCell(Index,cell(_,y))|R],[eulerCell(NewIndex,cell(n,n))|R1]):-
+	maxIndex(Max,[eulerCell(Index,cell(_,n))|R]),
+	(
+	    maybe,
+	    NewIndex = Index,
+	    newRowIndexesH(R,R1,Max,NewIndex,n),!;
+	    Max1 is Max+1,
+	    newIndex = Max1,
+	    newRowIndexesH(R,R1,Max1,NewIndex,y),!
+	).
+
+
+
+% newRowIndexesH(?Row,?R1,?CurrentMaxIndex,?LastIndex,?LastBottomBorder(..y/n))
+%
+%
+newRowIndexesH([],[],_,_,_):-!.
+newRowIndexesH([eulerCell(Index,cell(_,Y))|R],[eulerCell(NewIndex,cell(n,n))|R1],
+	       Max,LastIndex,LastBB):-
+	(
+            LastBB=y;
+	    Y=y;
+	    Index\=LastIndex
+	),
+	maybe,
+	NewIndex = LastIndex,
+	newRowIndexesH(R,R1,Max,NewIndex,Y),!;
+
+	Max1 is Max+1,
+	NewIndex = Max1,
+	newRowIndexesH(R,R1,Max1,NewIndex,Y),!.
 
 
 
