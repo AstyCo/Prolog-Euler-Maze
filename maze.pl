@@ -25,11 +25,11 @@ eulerCellsRow([ eulerCell(1, cell(n, n)),
 		eulerCell(2, cell(n, n)),
 		eulerCell(3, cell(n, n)) ]).
 
-eulerCellsRow1([ eulerCell(1, cell(n, n)),
+eulerCellsRow1([ eulerCell(1, cell(n, y)),
 		eulerCell(1, cell(y, n)),
-		eulerCell(2, cell(n, n)),
-		eulerCell(2, cell(n, n)),
-		eulerCell(2, cell(n, n)),
+		eulerCell(2, cell(n, y)),
+		eulerCell(2, cell(y, n)),
+		eulerCell(2, cell(n, y)),
 		eulerCell(2, cell(y, n)),
 		eulerCell(3, cell(n, n)) ]).
 
@@ -42,7 +42,17 @@ mazeGenerator(Rows,Columns,maze(Entrace,Exit,Matrix)):-
 
 %
 matrixGenerator(0,_,[]):-!.
-%matrixGenerator(RowCnt,ColumnCnt,[Row|RestRows]):-!. %отсечение?
+matrixGenerator(N,C,R):-
+	makeFirst(C,F),
+	N1 is N-1,
+	matrixGeneratorH(N1,C,L,F),
+	maplist(maplist(fromEuler),L,R).
+
+matrixGeneratorH(0,_,[F],F):-!.
+matrixGeneratorH(N,C,[L|R],L):-
+	N1 is N-1,
+	newRow(L,L1),
+	matrixGeneratorH(N1,C,R,L1).
 
 
 
@@ -75,11 +85,33 @@ setRightBorders([eulerCell(Index1,cell(n,Y)),eulerCell(Index2,cell(n,Z))|Rest],
 	(   Index1=Index2,R=n ; Index1\=Index2,R=y),
 	setRightBorders([eulerCell(Index2,cell(n,Z))|Rest],[eulerCell(Index2,cell(R1,Z))|BorderedRest]),!.
 
-setBottomBorders([X],[X]):-!.
-setBottomBorders([G|R],[RG|R1]):-
-	sameIndexGroup([G|R],R,G,_),
-	randomizeGroup(R,RG),
-	setBottomBorders(R,R1).
+%(i,o)
+setBottomBorders([],[]):-!.
+setBottomBorders(L, RA):-
+	sameIndexGroup(L,R,G,_),!,
+	randomizeGroup(G,RG),
+	setBottomBorders(R,R1),
+	append(RG,R1,RA).
+
+testRandomize2([eulerCell(4, cell(n, n)), eulerCell(4, cell(n, n)), eulerCell(4, cell(y, n))]).
+
+%randomizeGroup(?Group,?RandomizedBorderedGroup)
+%
+randomizeGroup([X],[X]):-!.
+randomizeGroup(X,Y):-
+	%is_list(X),
+	%is_list(Y),
+	length(Y,N),
+	length(X,N),
+	N1 is N+1,
+	random(1,N1,NnoBorder),
+	randset(NnoBorder,N,NoBorderIndexes),
+	getMask(N,NoBorderIndexes,BorderMask),
+	(
+	    installBottomBorders(X,BorderMask,Y),!;
+	    installBottomBorders(X,_,Y),!
+	).
+
 
 setBottomBorders1([X],[X]):-!.
 setBottomBorders1(Before,After):-
@@ -105,17 +137,9 @@ test(X,Y,N):-
 
 testSetBottom([eulerCell(1, cell(y, n)), eulerCell(4, cell(n, n)), eulerCell(4, cell(n, n)), eulerCell(4, cell(y, n)), eulerCell(5, cell(y, n)), eulerCell(6, cell(y, n)), eulerCell(7, cell(n, n))]).
 
-%randomizeGroup(?Group,?RandomizedBorderedGroup)
-%
-randomizeGroup([X],[X]):-!.
-randomizeGroup(X,Y):-
-	length(Y,N),
-	length(X,N),
-	N1 is N+1,
-	random(1,N1,NnoBorder),
-	randset(NnoBorder,N,NoBorderIndexes),
-	getMask(N,NoBorderIndexes,BorderMask),
-	installBottomBorders(X,BorderMask,Y).
+testSetBottom1([eulerCell(1, cell(y, n))]).
+
+
 %getMask(?MaskSize,?IndexesNoBorder,?MaskArray)
 %ex.:getMask(4,[2,3],X)->X=[y,n,n,y]
 %
@@ -182,6 +206,7 @@ isIndex(I,E):-
 	member(I,S).
 
 cellIndex(eulerCell(I,_),I).
+fromEuler(eulerCell(_,C),C).
 
 
 %maxIndex(?eulerList,?maxMember)
@@ -234,7 +259,17 @@ newRowIndexesH([eulerCell(Index,cell(_,Y))|R],[eulerCell(NewIndex,cell(n,n))|R1]
 
 
 
-
+%finishRow(?Row,?FinishRow)
+%
+finishRow([X],[X]):-!.
+finishRow([eulerCell(Index1,cell(Y,_)),eulerCell(Index1,cell(Z,_))|Rest],
+	   [eulerCell(Index1,cell(Y,n)),eulerCell(Index1,cell(Z,n))|BorderedRest]):-
+	finishRow([eulerCell(Index1,cell(Z,n))|Rest],[eulerCell(Index1,cell(Z,n))|BorderedRest]),!.
+finishRow([eulerCell(Index1,_),eulerCell(Index2,cell(Y,_))|Rest],
+	  [eulerCell(Index1,cell(n,n)),eulerCell(Index2,cell(Z,n))|BorderedRest])
+:-
+	finishRow([eulerCell(Index2,cell(Y,n))|Rest],
+			[eulerCell(Index2,cell(Z,n))|BorderedRest]).
 
 
 
