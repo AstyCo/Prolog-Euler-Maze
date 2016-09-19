@@ -37,8 +37,16 @@ eulerCellsRow1([ eulerCell(1, cell(n, y)),
 % main predicate
 %
 mazeGenerator(Rows,Columns,maze(Entrace,Exit,Matrix)):-
-	matrix_generator(Rows,Columns,Matrix),
-	entraces_generator(Rows,Columns,Entrace,Exit).
+	matrixGenerator(Rows,Columns,Matrix),
+	entraceGenerator(Rows,Columns,Entrace,Exit).
+
+
+entraceGenerator(R,C,cell(InX,InY),cell(OutX,OutY)):-
+	random(1,R,InX),
+	random(1,C,InY),
+	OutX is R - InX,
+	OutY is C - InY.
+
 
 %
 matrixGenerator(0,_,[]):-!.
@@ -232,7 +240,7 @@ newRowIndexes([eulerCell(Index,cell(_,y))|R],[eulerCell(NewIndex,cell(n,n))|R1])
 	    NewIndex = Index,
 	    newRowIndexesH(R,R1,Max,NewIndex,n),!;
 	    Max1 is Max+1,
-	    newIndex = Max1,
+	    NewIndex = Max1,
 	    newRowIndexesH(R,R1,Max1,NewIndex,y),!
 	).
 
