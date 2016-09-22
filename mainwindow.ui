@@ -27,7 +27,7 @@
     <property name="title">
      <string>Maze</string>
     </property>
-    <addaction name="action"/>
+    <addaction name="generate"/>
     <addaction name="action_2"/>
    </widget>
    <addaction name="menuAsda"/>
@@ -41,7 +41,7 @@
    </attribute>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
-  <action name="action">
+  <action name="generate">
    <property name="text">
     <string>Сгенерировать...</string>
    </property>
