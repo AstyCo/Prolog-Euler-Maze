@@ -18,8 +18,15 @@ INCLUDEPATH += "$$PWD/include"
 
 
 SOURCES += main.cpp\
-        mainwindow.cpp
+        mainwindow.cpp \
+    mazewidget.cpp \
+    mazescene.cpp \
+    cellobject.cpp
 
-HEADERS  += mainwindow.h
+HEADERS  += mainwindow.h \
+    mazewidget.h \
+    mazescene.h \
+    cellobject.h \
+    global.h
 
 FORMS    += mainwindow.ui

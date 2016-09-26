@@ -1,7 +1,11 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
 
+#include "mazescene.h"
+
 #include <QMainWindow>
+
+
 
 namespace Ui {
 class MainWindow;
@@ -17,6 +21,8 @@ public:
 
 private:
     Ui::MainWindow *ui;
+
+    QPointer<MazeScene> m_scene;
 };
 
 #endif // MAINWINDOW_H
