@@ -18,11 +18,11 @@ mazeExample( maze(
 ])).
 
 eulerCellsRow([ eulerCell(1, cell(n, n)),
+		eulerCell(1, cell(y, n)),
+		eulerCell(2, cell(y, n)),
 		eulerCell(1, cell(n, n)),
-		eulerCell(2, cell(n, n)),
-		eulerCell(2, cell(n, n)),
-		eulerCell(2, cell(n, n)),
-		eulerCell(2, cell(n, n)),
+		eulerCell(1, cell(n, n)),
+		eulerCell(1, cell(y, n)),
 		eulerCell(3, cell(n, n)) ]).
 
 eulerCellsRow1([ eulerCell(1, cell(n, y)),
@@ -136,33 +136,6 @@ randomizeGroup(X,Y):-
 	).
 
 
-setBottomBorders1([X],[X]):-!.
-setBottomBorders1(Before,After):-
-	findall(Cells,sameIndexCells(Before,_,Cells),SameGroups),
-	setBottomBordersHelper(SameGroups,SameGroupsWithBorders),
-	flatten(SameGroupsWithBorders,After).
-
-setBottomBorders1Helper([],[]):-!.
-setBottomBorders1Helper([X|Y],[X1|Y1]):-
-	randomizeGroup(X,X1),
-	setBottomBorders1Helper(Y,Y1).
-
-testRandomize([eulerCell(1,cell(n,n)),eulerCell(1,cell(n,n)),
-	       eulerCell(1,cell(y,n))]).
-
-testRandomize1([eulerCell(1,cell(n,y)),eulerCell(1,cell(n,n)),
-	       eulerCell(1,cell(y,y))]).
-
-test([X],[X],1):-!.
-test(X,Y,N):-
-   length(X,N),
-   length(Y,N).
-
-testSetBottom([eulerCell(1, cell(y, n)), eulerCell(4, cell(n, n)), eulerCell(4, cell(n, n)), eulerCell(4, cell(y, n)), eulerCell(5, cell(y, n)), eulerCell(6, cell(y, n)), eulerCell(7, cell(n, n))]).
-
-testSetBottom1([eulerCell(1, cell(y, n))]).
-
-
 %getMask(?MaskSize,?IndexesNoBorder,?MaskArray)
 %ex.:getMask(4,[2,3],X)->X=[y,n,n,y]
 %
@@ -199,23 +172,31 @@ sameIndexCells([eulerCell(Index1,_)|Rest],Index,RestCells):-
 	sameIndexCells(Rest,Index,RestCells)
 	,Index1\=Index.
 
+
+%connectedEulerCells(?connectedCells,?cells)
+connectedEC([],[],_):-!.
+connectedEC([eulerCell(I,cell(y,B))],[eulerCell(I,cell(y,B))|R],R).
+connectedEC([eulerCell(I,cell(n,B))|R],[eulerCell(I,cell(n,B))|R1],R2):-
+	connectedEC(R,R1,R2).
+
+
 %sameIndexGroup(?List,?Rest,?Group,?Index)
 %
-sameIndexGroup(L,R,G,I):-
-	sameIndexGroupH(L,R,G,I,no).
-sameIndexGroupH([],[],[],_,_):-!.
-sameIndexGroupH([eulerCell(I,Cell)|L1],R1,[eulerCell(I,Cell)|G1],I,_):-
-	sameIndexGroupH(L1,R1,G1,I,yes).
-sameIndexGroupH([eulerCell(I1,Cell)|L],[eulerCell(I1,Cell)|L],[],I,yes):-
-	I1\=I,!.
-sameIndexGroupH([eulerCell(I1,Cell)|L],R,G,I,no):-
-	isIndex(I,[eulerCell(I1,Cell)|L]),
-	I1\=I,
-	sameIndexGroupH(L,R,G,I,no).
+sameIndexGroup([],[],[],none):-!.
+sameIndexGroup([eulerCell(I,Cell)|L1],R1,G1,I1):-
+	sameIndexGroupH([eulerCell(I,Cell)|L1],R,G,I),
+	(   R1=R,G1=G,I1=I;
+	sameIndexGroup(R,R1,G1,I1) ).
+
+sameIndexGroupH([],[],[],_):-!.
+sameIndexGroupH([eulerCell(I,Cell)|L1],R1,[eulerCell(I,Cell)|G1],I):-
+	sameIndexGroupH(L1,R1,G1,I),!.
+sameIndexGroupH([eulerCell(I1,Cell)|R],[eulerCell(I1,Cell)|R],[],_).
 
 eulerToSet(E,S):-
 	maplist(cellIndex,E,L),
 	list_to_set(L,S).
+
 isIndex(I,E):-
 	eulerToSet(E,S),
 	member(I,S).
@@ -237,13 +218,14 @@ myrow1([eulerCell(1, cell(y, n)), eulerCell(2, cell(n, n)), eulerCell(2, cell(n,
 %
 newRow(R,Rnew):-
 	newRowIndexes(R,R1),
-	setBorders(R1,Rnew).
+	setBottomBorders(R1,Rnew).
 
 newRowIndexes([],[]):-!.
 newRowIndexes(B,A):-
 	maxIndex(Max, B),
 	updateIndexes(B,A1,Max),
-	randomJoinIndexesNew(A1,A).
+	rJIN(A1,A2,JI),
+	joinGroups(A2,A,JI).
 %updateIndexes(?BeforeRow,?AfterRow,?MaxHelper)
 updateIndexes([],[],_):-!.
 updateIndexes([eulerCell(Index,cell(_,n))|B],[eulerCell(Index,cell(n,n))|A],Max):-
@@ -252,38 +234,125 @@ updateIndexes([eulerCell(_,cell(_,y))|B],[eulerCell(Max1,cell(n,n))|A],Max):-
 	Max1 is Max+1,
 	updateIndexes(B,A,Max1).
 
+%problem on iterations:
+% on cells connection need to join groups,
+% easy to join all next cells from the same groups, but also need to
+% join past cells.
+% Subproblems:
+% it is possible situation where groups
+% 1->(joins)2,
+% 1->3 (next columns, same row)
+% if we will try to write simple Prolog-kind algorithm
+% we will stuck to the next error:
+% cells joined to the group 2, and cells joined to the group 3
+% represented like cells from different groups -- mistake.
+
+joinGroups(R,R1,JI):-
+	jiToJs(JI,JS),
+	joinSets(R,R1,JS).
+
+joinSets(R,R,[]):-!.
+joinSets(R,RA,[[I0|IGR]|IR]):-
+	joinSomeSet(R,R1,[I0|IGR],I0),
+	joinSets(R1,RA,IR).
+
+joinSomeSet(R,R,[],_):-!.
+joinSomeSet(R,RA,[I|IR],I0):-
+	changeIndexes(R,R1,I,I0),
+	joinSomeSet(R1,RA,IR,I0).
+
+
+testMyJs([[1,2],[1,3],[4,5],[6,7],[3,7]]).
+
+jiToJs([],[]):-!.
+jiToJs([[Index1,Index2]|R],JS3):-
+        jiToJs(R,JS1),
+	flatten(JS1,L),
+	(   member(Index1,L),
+	    (	member(Index2,L),
+		pasteTogether(JS1,[Index1,Index2],JS2),!;
+	    JS2=JS1
+	    ),
+	    addToSomeSet((Index1,Index2),JS2,JS3),!;
+	member(Index2,L),
+	addToSomeSet((Index2,Index1),JS1,JS3),!;
+
+	JS3=[[Index1,Index2]|JS1]
+	)
+	.
+
+pasteTogether([],_,[]):-!.
+pasteTogether(JS1,Indexes,JS2):-
+	list_to_ord_set(Indexes,OSI),
+	pTH(JS1,OSI,WO,W),
+	flatten(W,FW1),
+	list_to_ord_set(FW1,FW),
+	JS2=[FW|WO].
+
+pTH([],_,[],[]).
+pTH([S|R],IS,WO,W):-
+    pTH(R,IS,WO1,W1),
+    list_to_ord_set(S,OS),
+    (	ord_intersect(IS,OS),
+	W=[S|W1],
+	WO=WO1,!;
+    W=W1,
+    WO=[S|WO1]
+    ).
+
+addToSomeSet((Index1,Index2),[S|R1],[S1|R2]):-
+	member(Index1,S),
+	S1=[Index2|S],
+	R2=R1,!;
+	addToSomeSet((Index1,Index2),R1,R2),
+	S=S1.
+
+
+
+/*
 randomJoinIndexesNew([],[]):-!.
 randomJoinIndexesNew([X],[X]):-!.
 randomJoinIndexesNew([eulerCell(Index0,cell(_,_)),eulerCell(Index0,cell(_,_))|B],A):-
-	maxIndex(Max,[eulerCell(Index0,cell(_,_)),eulerCell(Index0,cell(_,_))|B]),
-	rJIN([eulerCell(Index0,cell(_,_)),eulerCell(Index0,cell(_,_))|B],A,Index0,Max),!.
+	rJIN([eulerCell(Index0,cell(_,_)),eulerCell(Index0,cell(_,_))|B],A,Index0),!.
 randomJoinIndexesNew(B,A):-
 	maxIndex(Max,B),
 	Max1 is Max+1,
-	rJIN(B,A,Max1,Max),!.
+	rJIN(B,A,Max1 ),!.
+*/
 
+mys([eulerCell(1,cell(y,n)),eulerCell(2,cell(y,n)),eulerCell(1,cell(n,n)),eulerCell(1,cell(y,n)),eulerCell(1,cell(n,n)),eulerCell(1,cell(n,n)),eulerCell(1,cell(n,n))]).
 
 
 
 %
-rJIN([],[],_,_):-!.
-rJIN([X],[X],_,_):-!.
-rJIN([eulerCell(Index0,cell(_,_)),eulerCell(Index1,cell(_,_))|B],[eulerCell(Index0,cell(n,n)),eulerCell(Index2,cell(n,n))|A],Index1,Max):-
-	Index2 is Max+1,
-	rJIN([eulerCell(Index2,cell(n,n))|B],[eulerCell(Index2,cell(n,n))|A],Index1,Index2),
+rJIN([],[],[]):-!.
+rJIN([X],[X],[]):-!.
+rJIN([eulerCell(Index0,cell(_,_)),eulerCell(Index0,cell(_,_))|B],[eulerCell(Index0,cell(y,n)),eulerCell(Index0,cell(X,n))|A],JI):-
+	rJIN([eulerCell(Index0,cell(n,n))|B],[eulerCell(Index0,cell(X,n))|A],JI),
 	!.
-rJIN([eulerCell(Index1,cell(_,_)),eulerCell(Index2,cell(_,_))|B],[eulerCell(Index1,cell(n,n)),eulerCell(Index21,cell(n,n))|A],_,Max):-
+rJIN([eulerCell(Index1,cell(_,_)),eulerCell(Index2,cell(_,_))|B],[eulerCell(Index1,cell(X1,n)),eulerCell(Index21,cell(X2,n))|A],JI1):-
 	(
         maybe,
-	Max1 is Max+1,
-	Index21=Max1,!;
+	X1 = y,
+	Index21=Index2,
+        B=B1,
+        JI1=JI,
 
-        Max1 = Max,
-        Index21 = Index1,!
+        !;
+
+        X1 = n,
+        Index21=Index1,
+        changeIndexes(B,B1,Index2,Index1),
+        JI1=[[Index1,Index2]|JI],
+        !
 	),
-	rJIN([eulerCell(Index21,cell(_,_))|B],[eulerCell(Index21,cell(n,n))|A],Index2,Max1),
-	!.
+	rJIN([eulerCell(Index21,cell(_,_))|B1],[eulerCell(Index21,cell(X2,n))|A],JI),!.
 
+changeIndexes([],[],_,_):-!.
+changeIndexes([eulerCell(Index1,Cell)|R],[eulerCell(Index2,Cell)|R1],Index1,Index2):-
+	changeIndexes(R,R1,Index1,Index2),!.
+changeIndexes([X|R],[X|R1],Index1,Index2):-
+	changeIndexes(R,R1,Index1,Index2).
 
 
 
@@ -327,7 +396,8 @@ newRowIndexesH1([eulerCell(Index,cell(_,Y))|R],[eulerCell(NewIndex,cell(n,n))|R1
 
 */
 finishRow(B,A):-
-	newRowIndexes(B,A1),
+	maxIndex(Max, B),
+	updateIndexes(B,A1,Max),
 	finishRowH(A1,A).
 
 

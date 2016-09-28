@@ -10,9 +10,10 @@
 int main(int argc, char *argv[])
 {
     try{
-        char env[] = "SWI_HOME_DIR=D:\\Soft\\Prolog\\swipl32";
+        char env[] = "SWI_HOME_DIR=C:\\Soft\\swipl32";
         putenv(env);
         static char * av []  =  {"libpl.dll", NULL} ;
+        qDebug()<<env;
         if (PL_initialise(1 , av) == 0)
         {
             PL_halt(1);
@@ -20,9 +21,13 @@ int main(int argc, char *argv[])
         }
         else
             qDebug() << "lib initialize ok!";
-//        PL_initialise(argc,argv);
+
+    qDebug()<<"Ok";
 
     QApplication a(argc, argv);
+
+
+
     MainWindow w;
     w.show();
 

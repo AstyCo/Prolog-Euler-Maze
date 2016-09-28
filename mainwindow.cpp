@@ -29,6 +29,7 @@ void read_cell_var(term_t varT, bool& var)
 {
     char *s;
     PL_get_chars(varT, &s, CVT_ALL);
+    qDebug()<<s;
 
     if(s[0]=='y')
         var=true;
@@ -194,12 +195,12 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    PlCall(" consult( swi( 'swipl-win.rc' ) )"); //no needed
-    PlCall("consult(\'../labyrinth/maze.pl\')");
+//    PlCall(" consult( swi( 'swipl-win.rc' ) )"); //no needed
+    PlCall("consult(\'../Prolog-Euler-Maze/maze.pl\')");
     term_t maze=PL_new_term_ref(),ans=PL_new_term_ref(),cols=PL_new_term_ref(),rows=PL_new_term_ref();
 
     int nRows = 30;
-    int nColumns = 5;
+    int nColumns = 40;
 
     PL_put_integer(rows,nRows);
     PL_put_integer(cols,nColumns);
