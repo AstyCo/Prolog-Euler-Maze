@@ -1,5 +1,6 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
+#include "parameterswidget.h"
 
 #include <SWI-cpp.h>
 #include <SWI-Prolog.h>
@@ -7,6 +8,10 @@
 
 #include <QPainter>
 #include <QPaintEvent>
+#include <QSlider>
+#include <QWidgetAction>
+#include <QToolButton>
+#include <QGroupBox>
 
 
 #include <QDebug>
@@ -29,14 +34,17 @@ void read_cell_var(term_t varT, bool& var)
 {
     char *s;
     PL_get_chars(varT, &s, CVT_ALL);
-    qDebug()<<s;
+//    qDebug()<<s;
 
     if(s[0]=='y')
         var=true;
     else if (s[0]=='n')
         var=false;
     else
+    {
+        qDebug() << s;
         Q_ASSERT(false);
+    }
 
     free(s);
 }
@@ -195,15 +203,18 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
-//    PlCall(" consult( swi( 'swipl-win.rc' ) )"); //no needed
+    installMenus();
+//    generateMaze();
+}
+
+void MainWindow::generateMaze()
+{
+    qDebug() << "generateMaze";
     PlCall("consult(\'../Prolog-Euler-Maze/maze.pl\')");
     term_t maze=PL_new_term_ref(),ans=PL_new_term_ref(),cols=PL_new_term_ref(),rows=PL_new_term_ref();
 
-    int nRows = 30;
-    int nColumns = 40;
-
-    PL_put_integer(rows,nRows);
-    PL_put_integer(cols,nColumns);
+    PL_put_integer(rows,m_paramWidget->row());
+    PL_put_integer(cols,m_paramWidget->col());
 
 
     functor_t mazeGenerator = PL_new_functor(PL_new_atom("mazeGenerator"),3);
@@ -211,42 +222,91 @@ MainWindow::MainWindow(QWidget *parent) :
         qDebug() << "!PL_cons_functor(ans,mazeGenerator,rows,cols,maze)";
     if(PL_call(ans,NULL))
     {
-        qDebug() << "ans is NULL";
         QPair<int,int> in, out;
         QVector<QVector<QPair<bool,bool> > > matrix;
 
 
         read_maze(maze, in, out, matrix);
 
-        qDebug() << pl_display(maze);
-
-
-
-//        qDebug() << "in "<<in;
-//        qDebug() << "out "<<out;
-        qDebug() << "matrix "<<matrix;
-//        qDebug() << "matrix size: "<< matrix[0][0];
-
-        m_scene = new MazeScene(this);
-        m_scene->initScene(nRows,nColumns);
+        if(m_scene.isNull())
+        {
+            m_scene = new MazeScene(this);
+            ui->graphicsView1->setScene(m_scene);
+            ui->graphicsView2->setScene(m_scene);
+        }
+        if(!(m_scene->rows()==m_paramWidget->row() && m_scene->columns()==m_paramWidget->col()))
+            m_scene->initScene(m_paramWidget->row(),m_paramWidget->col());
         m_scene->updateItems(convertMatrix(matrix));
 
         m_scene->setEntrace(in.first,in.second);
         m_scene->setEntrace(out.first,out.second);
-
-        ui->mazeView->setScene(m_scene);
-
     }
-    else
-        setHidden(true);
-
-
-
-
-
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::installMenus()
+{
+    // MAZE PARAMETERS INSTALL
+    QWidgetAction *p_action = new QWidgetAction(this);
+    m_paramWidget = new ParametersWidget(this);
+    m_paramWidget->setRow(20);
+    m_paramWidget->setCol(30);
+
+    p_action->setDefaultWidget(m_paramWidget);
+    ui->menuParameters->addAction(p_action);
+
+
+    // RUN PARAMETERS INSTALL
+    QWidgetAction *rp_action = new QWidgetAction(this);
+
+    QGroupBox* speedSelectionWidget = new QGroupBox(tr("Generation speed"),ui->toolBar);
+    QSlider *wd = new QSlider();
+    wd->setOrientation(Qt::Horizontal);
+    wd->setMinimum(0);
+    wd->setMaximum(100);
+
+
+    m_runParamsSlider = new QSlider(speedSelectionWidget);
+
+    setStyleSheet(
+                "QSlider::groove:horizontal {"
+                    "border: 1px solid #999999;"
+                    "height: 8px;"
+                    "background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #B1B1B1, stop:1 #c4c4c4);"
+                    "margin: 2px 0;"
+                "}"
+
+                "QSlider::handle:horizontal {"
+                  "background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #b4b4b4, stop:1 #8f8f8f);"
+                  "border: 1px solid #0c457e;"
+                  "width: 18px;"
+                  "margin: -2px 0;"
+                  "border-radius: 2px;"
+                  "}");
+
+    m_runParamsSlider->setOrientation(Qt::Horizontal);
+    m_runParamsSlider->setMinimum(0);
+    m_runParamsSlider->setMaximum(100);
+
+    QVBoxLayout *gs_layout = new QVBoxLayout;
+    gs_layout->addWidget(m_runParamsSlider);
+    speedSelectionWidget->setLayout(gs_layout);
+
+    rp_action->setDefaultWidget(speedSelectionWidget);
+    QMenu *runMenu = new QMenu(ui->toolBar);
+    runMenu->addAction(rp_action);
+    ui->actionRun->setMenu(runMenu);
+
+    QToolButton *p_button = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionRun));
+    if(p_button)
+        p_button->setPopupMode(QToolButton::InstantPopup);
+}
+
+void MainWindow::on_actionGenerate_triggered()
+{
+    generateMaze();
 }

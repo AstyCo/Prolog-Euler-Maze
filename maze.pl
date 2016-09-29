@@ -346,7 +346,7 @@ rJIN([eulerCell(Index1,cell(_,_)),eulerCell(Index2,cell(_,_))|B],[eulerCell(Inde
         JI1=[[Index1,Index2]|JI],
         !
 	),
-	rJIN([eulerCell(Index21,cell(_,_))|B1],[eulerCell(Index21,cell(X2,n))|A],JI),!.
+	rJIN([eulerCell(Index21,cell(n,n))|B1],[eulerCell(Index21,cell(X2,n))|A],JI),!.
 
 changeIndexes([],[],_,_):-!.
 changeIndexes([eulerCell(Index1,Cell)|R],[eulerCell(Index2,Cell)|R1],Index1,Index2):-

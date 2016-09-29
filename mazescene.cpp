@@ -10,6 +10,12 @@ MazeScene::MazeScene(QObject * parent):
 
 void MazeScene::initScene(int rows, int columns)
 {
+    if(!m_objects.isEmpty())
+    {
+        m_objects.clear();
+        clear();
+    }
+
     m_rows = rows;
     m_columns = columns;
     for(int i=0;i<rows;++i)
@@ -40,13 +46,11 @@ void MazeScene::updateItems(const QVector<QVector<Cell> > &matrix)
             m_objects[i][j]->setCell(matrix[i][j]);
         }
     }
+    update();
 }
 
 void MazeScene::setEntrace(int row, int column)
 {
-    qDebug() << "setEntrace " <<row<<','<<column;
-    qDebug() << m_rows;
-
     if(row==0)
     {
         m_objects[row][column]->cell().top = false;
@@ -63,6 +67,16 @@ void MazeScene::setEntrace(int row, int column)
     {
         m_objects[row][column]->cell().right = false;
     }
+}
+
+int MazeScene::rows() const
+{
+    return m_rows;
+}
+
+int MazeScene::columns() const
+{
+    return m_columns;
 }
 //#include <QGraphicsSceneMouseEvent>
 

@@ -17,8 +17,8 @@ public:
     void updateItems(const QVector<QVector<Cell> >&matrix);
     void setEntrace(int row, int column);
 
-//protected:
-//    void mousePressEvent(QGraphicsSceneMouseEvent *event);
+    int rows() const;
+    int columns() const;
 
 private:
     QVector<QVector<QPointer<CellObject> > > m_objects;

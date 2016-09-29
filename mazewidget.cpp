@@ -12,15 +12,9 @@ MazeWidget::MazeWidget(QWidget *parent) : QWidget(parent)
 
 void MazeWidget::paintEvent(QPaintEvent *)
 {
-    qDebug() << "paintEvent!";
-    qDebug() << rect();
-
-
     QRect mazeRect = rect().adjusted(5,5,-5,-5);
     qreal dx = ((qreal)mazeRect.width()) / m_columns,
             dy = ((qreal)mazeRect.height()) / m_rows;
-
-    qDebug() << "last y "<<m_rows*dy;
 
     QPainter painter(this);
 

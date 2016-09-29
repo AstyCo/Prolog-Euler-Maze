@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>400</width>
-    <height>300</height>
+    <width>915</width>
+    <height>569</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,13 @@
   <widget class="QWidget" name="centralWidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <widget class="QGraphicsView" name="mazeView"/>
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="QGraphicsView" name="graphicsView1"/>
+      <widget class="QGraphicsView" name="graphicsView2"/>
+     </widget>
     </item>
    </layout>
   </widget>
@@ -25,40 +31,80 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>400</width>
+     <width>915</width>
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuAsda">
+   <widget class="QMenu" name="menuMaze">
     <property name="title">
-     <string>Maze</string>
+     <string>Лабиринт</string>
     </property>
-    <addaction name="generate"/>
-    <addaction name="action_2"/>
+    <addaction name="actionGenerate"/>
+    <addaction name="actionInteractiveGeneration"/>
    </widget>
-   <addaction name="menuAsda"/>
+   <widget class="QMenu" name="menuParameters">
+    <property name="title">
+     <string>Число строк/столбцов</string>
+    </property>
+   </widget>
+   <addaction name="menuMaze"/>
+   <addaction name="menuParameters"/>
   </widget>
-  <widget class="QToolBar" name="mainToolBar">
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextBesideIcon</enum>
+   </property>
    <attribute name="toolBarArea">
     <enum>TopToolBarArea</enum>
    </attribute>
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionRun"/>
+   <addaction name="actionMake_step"/>
   </widget>
-  <widget class="QStatusBar" name="statusBar"/>
-  <action name="generate">
+  <action name="actionGenerate">
    <property name="text">
     <string>Сгенерировать...</string>
    </property>
   </action>
-  <action name="action_2">
+  <action name="actionInteractiveGeneration">
    <property name="text">
     <string>Интерактивная генерация...</string>
    </property>
   </action>
+  <action name="actionRun">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/resources/play.png</normaloff>:/resources/play.png</iconset>
+   </property>
+   <property name="text">
+    <string>Run</string>
+   </property>
+  </action>
+  <action name="actionMake_step">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/resources/step.png</normaloff>:/resources/step.png</iconset>
+   </property>
+   <property name="text">
+    <string>Make step</string>
+   </property>
+  </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
- <resources/>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
  <connections/>
 </ui>

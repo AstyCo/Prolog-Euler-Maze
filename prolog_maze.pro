@@ -21,12 +21,20 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     mazewidget.cpp \
     mazescene.cpp \
-    cellobject.cpp
+    cellobject.cpp \
+    parameterswidget.cpp \
+    parameterswidgetaction.cpp
 
 HEADERS  += mainwindow.h \
     mazewidget.h \
     mazescene.h \
     cellobject.h \
-    global.h
+    global.h \
+    parameterswidget.h \
+    parameterswidgetaction.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    parameterswidget.ui
+
+RESOURCES += \
+    icons.qrc
