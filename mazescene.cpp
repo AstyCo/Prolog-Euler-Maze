@@ -10,7 +10,7 @@ MazeScene::MazeScene(QObject * parent):
 
 void MazeScene::initScene(int rows, int columns)
 {
-    if(!m_objects.isEmpty())
+    if(!m_objects.isEmpty() || !m_entraces.isEmpty())
     {
         m_objects.clear();
         clear();
@@ -25,7 +25,7 @@ void MazeScene::initScene(int rows, int columns)
         {
             CellObject *cell = new CellObject;
 
-            addItem(cell);
+            cell->setScene(this);
             cell->setPos(EDGE*j, EDGE*i);
 
             row.append(cell);
@@ -34,7 +34,7 @@ void MazeScene::initScene(int rows, int columns)
         m_objects.append(row);
     }
 
-    setSceneRect(itemsBoundingRect());
+    setSceneRect(itemsBoundingRect().adjusted(-2,-2,2,2));
 }
 
 void MazeScene::updateItems(const QVector<QVector<Cell> > &matrix)
@@ -67,6 +67,8 @@ void MazeScene::setEntrace(int row, int column)
     {
         m_objects[row][column]->cell().right = false;
     }
+
+    m_entraces.append(QPair<int,int>(row,column));
 }
 
 int MazeScene::rows() const
@@ -77,6 +79,35 @@ int MazeScene::rows() const
 int MazeScene::columns() const
 {
     return m_columns;
+}
+
+void MazeScene::setViewportMode(const QPointer<QWidget> &vp, MazeScene::viewMode mode)
+{
+    if(vp)
+    {
+        if(m_modes.contains(vp))
+            m_modes[vp] = mode;
+        else
+            m_modes.insert(vp,mode);
+    }
+}
+
+MazeScene::viewMode MazeScene::modeForViewport(const QPointer<QWidget> &vp) const
+{
+    if(m_modes.contains(vp))
+        return m_modes[vp];
+
+    return mazeNoInfo;
+}
+
+bool MazeScene::isEntrace(const QPair<int,int> &pos) const
+{
+    return m_entraces.contains(pos);
+}
+
+void MazeScene::clearEntraces()
+{
+    m_entraces.clear();
 }
 //#include <QGraphicsSceneMouseEvent>
 

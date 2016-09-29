@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "parameterswidget.h"
+#include "cellobject.h"
 
 #include <SWI-cpp.h>
 #include <SWI-Prolog.h>
@@ -49,18 +50,33 @@ void read_cell_var(term_t varT, bool& var)
     free(s);
 }
 
-void read_cell(term_t cellT, QPair<bool,bool>&cell)
+void read_cell(term_t cellT, Cell &cell)
 {
     term_t rightT = PL_new_term_ref(), bottomT = PL_new_term_ref();
 
     PL_get_arg(1,cellT,rightT);
     PL_get_arg(2,cellT,bottomT);
 
-    read_cell_var(rightT,cell.first);
-    read_cell_var(bottomT,cell.second);
+    read_cell_var(rightT,cell.right);
+    read_cell_var(bottomT,cell.bottom);
 }
 
-void read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<QPair<bool,bool> > > &matrix)
+void read_euler_cell(term_t eulerCellT, Cell &cell)
+{
+    term_t cellT = PL_new_term_ref(), indexT = PL_new_term_ref();
+
+    PL_get_arg(1,eulerCellT,indexT);
+    PL_get_arg(2,eulerCellT,cellT);
+
+    read_cell(cellT,cell);
+
+    cell.euler = true;
+    PL_get_integer(indexT,&cell.index);
+}
+
+
+
+void read_euler_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<Cell > > &matrix)
 {
     term_t inT = PL_new_term_ref(),outT = PL_new_term_ref(),matrixLT = PL_new_term_ref();
 
@@ -75,22 +91,66 @@ void read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVec
     {
         term_t head = PL_new_term_ref();
         term_t list = PL_copy_term_ref(matrixLT);
-
+        int i = 0;
         while( PL_get_list(list, head, list) )
         {
-            QVector<QPair<bool,bool> > row;
+            QVector<Cell > row;
+
+            term_t eulerCellT = PL_new_term_ref();
+            term_t list1 = PL_copy_term_ref(head);
+            int j = 0;
+            while( PL_get_list(list1, eulerCellT, list1) )
+            {
+                Cell cell;
+                cell.r = i;
+                cell.c = j;
+
+                read_euler_cell(eulerCellT,cell);
+                row.append(cell);
+                ++j;
+            }
+            matrix.append(row);
+            ++i;
+        }
+    }
+}
+
+void read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<Cell > > &matrix)
+{
+    term_t inT = PL_new_term_ref(),outT = PL_new_term_ref(),matrixLT = PL_new_term_ref();
+
+    PL_get_arg(1,mazeT,inT);
+        read_entrace(inT,in);
+
+    PL_get_arg(2,mazeT,outT);
+        read_entrace(outT,out);
+
+    PL_get_arg(3,mazeT,matrixLT);
+
+    {
+        term_t head = PL_new_term_ref();
+        term_t list = PL_copy_term_ref(matrixLT);
+        int i = 0;
+        while( PL_get_list(list, head, list) )
+        {
+            QVector<Cell > row;
 
             term_t cellT = PL_new_term_ref();
             term_t list1 = PL_copy_term_ref(head);
 
+            int j = 0;
             while( PL_get_list(list1, cellT, list1) )
             {
-                QPair<bool,bool> cell;
+                Cell cell;
+                cell.r = i;
+                cell.c = j;
 
                 read_cell(cellT,cell);
                 row.append(cell);
+                ++j;
             }
             matrix.append(row);
+            ++i;
         }
     }
 }
@@ -165,36 +225,31 @@ QString pl_display(term_t t)
 }
 
 
-QVector<QVector<Cell> > convertMatrix(const QVector<QVector<QPair<bool,bool> > >& matrix)
+QVector<QVector<Cell> > &convertRepresentation(QVector<QVector<Cell > >& matrix)
 {
-    QVector<QVector<Cell> > res;
-
     int rows = matrix.size(),
         columns = ( (rows)?(matrix[0].size()):(0) );
 
     QVector<bool> lastRowB(columns);
     bool lastCellR;
+
     for(int i = 0; i<rows; ++i)
     {
-        QVector<Cell> row;
         for(int j=0; j<columns; ++j)
         {
-            QPair<bool,bool> cellM = matrix[i][j];
-
-            Cell cell;
+            Cell &cell = matrix[i][j];
 
             cell.left = (!j || lastCellR);
-            cell.right = (j==columns-1 || cellM.first);
+            cell.right = (j==columns-1 || cell.right);
             cell.top = (!i || lastRowB[j]);
-            cell.bottom = (i==rows-1 || cellM.second);
+            cell.bottom = (i==rows-1 || cell.bottom);
 
             lastRowB[j] = cell.bottom;
             lastCellR = cell.right;
-            row.append(cell);
         }
-        res.append(row);
     }
-    return res;
+
+    return matrix;
 }
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -204,12 +259,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     installMenus();
-//    generateMaze();
 }
 
 void MainWindow::generateMaze()
 {
     qDebug() << "generateMaze";
+
     PlCall("consult(\'../Prolog-Euler-Maze/maze.pl\')");
     term_t maze=PL_new_term_ref(),ans=PL_new_term_ref(),cols=PL_new_term_ref(),rows=PL_new_term_ref();
 
@@ -217,27 +272,33 @@ void MainWindow::generateMaze()
     PL_put_integer(cols,m_paramWidget->col());
 
 
-    functor_t mazeGenerator = PL_new_functor(PL_new_atom("mazeGenerator"),3);
+    functor_t mazeGenerator = PL_new_functor(PL_new_atom("eulerMazeGenerator"),3);
     if(!PL_cons_functor(ans,mazeGenerator,rows,cols,maze))
         qDebug() << "!PL_cons_functor(ans,mazeGenerator,rows,cols,maze)";
     if(PL_call(ans,NULL))
     {
         QPair<int,int> in, out;
-        QVector<QVector<QPair<bool,bool> > > matrix;
+        QVector<QVector<Cell > > matrix;
 
 
-        read_maze(maze, in, out, matrix);
+        read_euler_maze(maze, in, out, matrix);
 
         if(m_scene.isNull())
         {
             m_scene = new MazeScene(this);
             ui->graphicsView1->setScene(m_scene);
             ui->graphicsView2->setScene(m_scene);
+
+            m_scene->setViewportMode(ui->graphicsView1->viewport(),MazeScene::mazeNoInfo);
+            m_scene->setViewportMode(ui->graphicsView2->viewport(),MazeScene::mazeWithInfo);
         }
         if(!(m_scene->rows()==m_paramWidget->row() && m_scene->columns()==m_paramWidget->col()))
             m_scene->initScene(m_paramWidget->row(),m_paramWidget->col());
-        m_scene->updateItems(convertMatrix(matrix));
+        m_scene->updateItems(convertRepresentation(matrix));
 
+        qDebug() << in << out;
+
+        m_scene->clearEntraces();
         m_scene->setEntrace(in.first,in.second);
         m_scene->setEntrace(out.first,out.second);
     }

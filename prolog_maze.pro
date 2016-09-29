@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     mazescene.cpp \
     cellobject.cpp \
     parameterswidget.cpp \
-    parameterswidgetaction.cpp
+    parameterswidgetaction.cpp \
+    mazeview.cpp
 
 HEADERS  += mainwindow.h \
     mazewidget.h \
@@ -31,7 +32,8 @@ HEADERS  += mainwindow.h \
     cellobject.h \
     global.h \
     parameterswidget.h \
-    parameterswidgetaction.h
+    parameterswidgetaction.h \
+    mazeview.h
 
 FORMS    += mainwindow.ui \
     parameterswidget.ui

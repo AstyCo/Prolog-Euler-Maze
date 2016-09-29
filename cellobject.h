@@ -4,15 +4,27 @@
 #include "global.h"
 
 #include <QGraphicsObject>
+#include <QWidget>
+#include <QPointer>
 
-
+class MazeScene;
 
 struct Cell
 {
     explicit Cell()
     {
-        right = bottom = left = top = false;
+        right = bottom = left = top = euler = false;
+        index = -1;
     }
+
+    QPair<int,int> pos() const{
+        return QPair<int,int>(r,c);
+    }
+
+    int r, c;
+
+    bool euler;
+    int index;
 
     bool right,
         bottom,
@@ -28,7 +40,7 @@ public:
     CellObject(QGraphicsItem * parent = 0);
 
     QRectF boundingRect() const;
-
+    void setScene(MazeScene *scene);
 
     Cell& cell() ;
     void setCell(const Cell &cell);
@@ -40,6 +52,7 @@ protected:
 
 private:
     Cell m_cell;
+    QPointer<MazeScene> m_scene;
 };
 
 QDebug operator<< (QDebug d, const Cell &cell);

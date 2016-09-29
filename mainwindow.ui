@@ -20,8 +20,8 @@
       <property name="orientation">
        <enum>Qt::Horizontal</enum>
       </property>
-      <widget class="QGraphicsView" name="graphicsView1"/>
-      <widget class="QGraphicsView" name="graphicsView2"/>
+      <widget class="MazeView" name="graphicsView1"/>
+      <widget class="MazeView" name="graphicsView2"/>
      </widget>
     </item>
    </layout>
@@ -103,6 +103,13 @@
   </action>
  </widget>
  <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>MazeView</class>
+   <extends>QGraphicsView</extends>
+   <header>mazeview.h</header>
+  </customwidget>
+ </customwidgets>
  <resources>
   <include location="icons.qrc"/>
  </resources>

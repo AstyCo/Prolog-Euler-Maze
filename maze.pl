@@ -25,20 +25,16 @@ eulerCellsRow([ eulerCell(1, cell(n, n)),
 		eulerCell(1, cell(y, n)),
 		eulerCell(3, cell(n, n)) ]).
 
-eulerCellsRow1([ eulerCell(1, cell(n, y)),
-		eulerCell(1, cell(y, n)),
-		eulerCell(2, cell(n, y)),
-		eulerCell(2, cell(y, n)),
-		eulerCell(2, cell(n, y)),
-		eulerCell(2, cell(y, n)),
-		eulerCell(3, cell(n, n)) ]).
-
-
-% main predicate
+% main predicates
 %
 mazeGenerator(Rows,Columns,maze(Entrace,Exit,Matrix)):-
-	matrixGenerator(Rows,Columns,Matrix),
+	matrixGenerator(Rows,Columns,EulerMatrix),
+	maplist(maplist(fromEuler),EulerMatrix,Matrix),
 	entraceGenerator(Rows,Columns,Entrace,Exit).
+
+eulerMazeGenerator(R,C,maze(In,Out,EM)):-
+	matrixGenerator(R,C,EM),
+	entraceGenerator(R,C,In,Out).
 
 
 entraceGenerator(R,C,cell(InX,InY),cell(OutX,OutY)):-
@@ -55,23 +51,25 @@ entraceGenerator(R,C,cell(InX,InY),cell(OutX,OutY)):-
 	OutY is C - InY - 1.
 
 
-%
+%matrixGenerator(?RowCount,?ColumnCount,?EulerMatrix)
 matrixGenerator(0,_,[]):-!.
 matrixGenerator(1,0,[]):-!.
-matrixGenerator(1,C,[cell(n,n)|R]):-
+matrixGenerator(1,C,[eulerCell(1,cell(n,n))|R]):-
 	C1 is C-1,
 	matrixGenerator(1,C1,R),!.
 
 matrixGenerator(N,C,R):-
 	makeFirst(C,F),
 	N1 is N-1,
-	matrixGeneratorH(N1,C,L,F),
-	maplist(maplist(fromEuler),L,R).
+	matrixGeneratorH(N1,C,R,F).
+
+%	maplist(maplist(fromEuler),L,R).
+
 %matrixGeneratorH(?nRow,?nCol,?matrix,?lastRow)
 %
-matrixGeneratorH(0,_,[F],F):-!.
-matrixGeneratorH(1,_,[L|R],L):-
-	finishRow(L,R).
+%matrixGeneratorH(0,_,[F],F):-!.
+matrixGeneratorH(1,_,[L|[R]],L):-
+	finishRow(L,R),!.
 matrixGeneratorH(N,C,[L|R],L):-
 	N1 is N-1,
 	newRow(L,L1),
@@ -396,8 +394,7 @@ newRowIndexesH1([eulerCell(Index,cell(_,Y))|R],[eulerCell(NewIndex,cell(n,n))|R1
 
 */
 finishRow(B,A):-
-	maxIndex(Max, B),
-	updateIndexes(B,A1,Max),
+	newRowIndexes(B,A1),
 	finishRowH(A1,A).
 
 
@@ -406,13 +403,14 @@ finishRow(B,A):-
 finishRowH([],[]):-!.
 finishRowH([X],[X]):-!.
 finishRowH([eulerCell(Index1,cell(Y,_)),eulerCell(Index1,cell(Z,_))|Rest],
-	   [eulerCell(Index1,cell(Y,n)),eulerCell(Index1,cell(Z,n))|BorderedRest]):-
-	finishRowH([eulerCell(Index1,cell(Z,n))|Rest],[eulerCell(Index1,cell(Z,n))|BorderedRest]),!.
+	   [eulerCell(Index1,cell(Y,n)),eulerCell(Index1,cell(Z1,n))|BorderedRest]):-
+	finishRowH([eulerCell(Index1,cell(Z,n))|Rest],[eulerCell(Index1,cell(Z1,n))|BorderedRest]),!.
 finishRowH([eulerCell(Index1,_),eulerCell(Index2,cell(Y,_))|Rest],
-	  [eulerCell(Index1,cell(n,n)),eulerCell(Index2,cell(Z,n))|BorderedRest])
+	  [eulerCell(Index1,cell(n,n)),eulerCell(Index21,cell(Z,n))|BorderedRest])
 :-
-	finishRowH([eulerCell(Index2,cell(Y,n))|Rest],
-			[eulerCell(Index2,cell(Z,n))|BorderedRest]).
+	joinGroups([eulerCell(Index2,cell(Y,_))|Rest],[eulerCell(Index21,cell(Y,n))|Rest1],[[Index1,Index2]]),
+	finishRowH([eulerCell(Index21,cell(Y,_))|Rest1],
+			[eulerCell(Index21,cell(Z,n))|BorderedRest]).
 
 
 
