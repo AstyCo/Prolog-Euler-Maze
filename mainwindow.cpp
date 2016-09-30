@@ -3,9 +3,7 @@
 #include "parameterswidget.h"
 #include "cellobject.h"
 
-#include <SWI-cpp.h>
-#include <SWI-Prolog.h>
-#include <SWI-Stream.h>
+
 
 #include <QPainter>
 #include <QPaintEvent>
@@ -19,7 +17,7 @@
 
 QString pl_display(term_t t);
 
-void read_entrace(term_t entraceT, QPair<int,int>& entrace)
+void MainWindow::read_entrace(term_t entraceT, QPair<int,int>& entrace)
 {
     term_t entraceX = PL_new_term_ref(),
             entraceY = PL_new_term_ref();
@@ -31,7 +29,7 @@ void read_entrace(term_t entraceT, QPair<int,int>& entrace)
     PL_get_integer(entraceY,&entrace.second);
 }
 
-void read_cell_var(term_t varT, bool& var)
+void MainWindow::read_cell_var(term_t varT, bool& var)
 {
     char *s;
     PL_get_chars(varT, &s, CVT_ALL);
@@ -50,7 +48,7 @@ void read_cell_var(term_t varT, bool& var)
     free(s);
 }
 
-void read_cell(term_t cellT, Cell &cell)
+void MainWindow::read_cell(term_t cellT, Cell &cell)
 {
     term_t rightT = PL_new_term_ref(), bottomT = PL_new_term_ref();
 
@@ -61,7 +59,7 @@ void read_cell(term_t cellT, Cell &cell)
     read_cell_var(bottomT,cell.bottom);
 }
 
-void read_euler_cell(term_t eulerCellT, Cell &cell)
+void MainWindow::read_euler_cell(term_t eulerCellT, Cell &cell)
 {
     term_t cellT = PL_new_term_ref(), indexT = PL_new_term_ref();
 
@@ -74,9 +72,7 @@ void read_euler_cell(term_t eulerCellT, Cell &cell)
     PL_get_integer(indexT,&cell.index);
 }
 
-
-
-void read_euler_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<Cell > > &matrix)
+void MainWindow::read_euler_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<Cell > > &matrix)
 {
     term_t inT = PL_new_term_ref(),outT = PL_new_term_ref(),matrixLT = PL_new_term_ref();
 
@@ -95,27 +91,31 @@ void read_euler_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVecto
         while( PL_get_list(list, head, list) )
         {
             QVector<Cell > row;
-
-            term_t eulerCellT = PL_new_term_ref();
-            term_t list1 = PL_copy_term_ref(head);
-            int j = 0;
-            while( PL_get_list(list1, eulerCellT, list1) )
-            {
-                Cell cell;
-                cell.r = i;
-                cell.c = j;
-
-                read_euler_cell(eulerCellT,cell);
-                row.append(cell);
-                ++j;
-            }
+            read_euler_row(head,row,i);
             matrix.append(row);
             ++i;
         }
     }
 }
 
-void read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<Cell > > &matrix)
+void MainWindow::read_euler_row(term_t head, QVector<Cell> &row,int row_index)
+{
+    term_t eulerCellT = PL_new_term_ref();
+    term_t list1 = PL_copy_term_ref(head);
+    int j = 0;
+    while( PL_get_list(list1, eulerCellT, list1) )
+    {
+        Cell cell;
+        cell.r = row_index;
+        cell.c = j;
+
+        read_euler_cell(eulerCellT,cell);
+        row.append(cell);
+        ++j;
+    }
+}
+
+void MainWindow::read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<Cell > > &matrix)
 {
     term_t inT = PL_new_term_ref(),outT = PL_new_term_ref(),matrixLT = PL_new_term_ref();
 
@@ -155,7 +155,7 @@ void read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVec
     }
 }
 
-QString pl_display(term_t t)
+QString MainWindow::pl_display(term_t t)
 {
     QString res;
     functor_t functor;
@@ -224,8 +224,7 @@ QString pl_display(term_t t)
     return res;
 }
 
-
-QVector<QVector<Cell> > &convertRepresentation(QVector<QVector<Cell > >& matrix)
+QVector<QVector<Cell> > &MainWindow::convertRepresentation(QVector<QVector<Cell > >& matrix)
 {
     int rows = matrix.size(),
         columns = ( (rows)?(matrix[0].size()):(0) );
