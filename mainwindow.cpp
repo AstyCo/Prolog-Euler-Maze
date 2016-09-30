@@ -251,6 +251,11 @@ QVector<QVector<Cell> > &MainWindow::convertRepresentation(QVector<QVector<Cell 
     return matrix;
 }
 
+void MainWindow::makeStep()
+{
+
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)

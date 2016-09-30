@@ -41,6 +41,7 @@ public:
 
 
 private slots:
+    void makeStep();
     void on_actionGenerate_triggered();
 
 private:
