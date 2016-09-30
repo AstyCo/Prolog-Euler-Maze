@@ -3,5 +3,7 @@
         <file>resources/play.png</file>
         <file>resources/settings.png</file>
         <file>resources/step.png</file>
+        <file>resources/play2.png</file>
+        <file>resources/updating-arrow.png</file>
     </qresource>
 </RCC>

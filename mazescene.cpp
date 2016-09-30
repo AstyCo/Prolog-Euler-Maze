@@ -13,6 +13,7 @@ void MazeScene::initScene(int rows, int columns)
     if(!m_objects.isEmpty() || !m_entraces.isEmpty())
     {
         m_objects.clear();
+        m_entraces.clear();
         clear();
     }
 

@@ -64,6 +64,7 @@
    <attribute name="toolBarBreak">
     <bool>false</bool>
    </attribute>
+   <addaction name="actionRe"/>
    <addaction name="actionRun"/>
    <addaction name="actionMake_step"/>
   </widget>
@@ -91,6 +92,9 @@
    <property name="text">
     <string>Run</string>
    </property>
+   <property name="autoRepeat">
+    <bool>false</bool>
+   </property>
   </action>
   <action name="actionMake_step">
    <property name="icon">
@@ -99,6 +103,18 @@
    </property>
    <property name="text">
     <string>Make step</string>
+   </property>
+  </action>
+  <action name="actionRe">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/resources/updating-arrow.png</normaloff>:/resources/updating-arrow.png</iconset>
+   </property>
+   <property name="text">
+    <string>Re</string>
+   </property>
+   <property name="autoRepeat">
+    <bool>false</bool>
    </property>
   </action>
  </widget>
