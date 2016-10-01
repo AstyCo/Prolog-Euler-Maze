@@ -13,13 +13,12 @@ TEMPLATE = app
 
 message(LIB: "$$PWD/lib/libswipl.lib")
 
-LIBS += -L "$$PWD/lib" -lswipl
+LIBS += -L"$$PWD/lib" -lswipl -lgcc_s_sjlj-1 -lgmp-10 -lwinpthread-1
 INCLUDEPATH += "$$PWD/include"
 
 
 SOURCES += main.cpp\
         mainwindow.cpp \
-    mazewidget.cpp \
     mazescene.cpp \
     cellobject.cpp \
     parameterswidget.cpp \
@@ -29,7 +28,6 @@ SOURCES += main.cpp\
     prolog.cpp
 
 HEADERS  += mainwindow.h \
-    mazewidget.h \
     mazescene.h \
     cellobject.h \
     global.h \
