@@ -79,7 +79,7 @@ QVector<QVector<Cell> > MazeWidget::matrix() const
 
 void MazeWidget::setMatrix(const QVector<QVector<QPair<bool, bool> > > &matrix)
 {
-
+    Q_UNUSED(matrix);
 }
 
 QPair<int, int> MazeWidget::out() const

@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
         qDebug()<<env;
         if (PL_initialise(1 , av) == 0)
         {
-            PL_halt(1);
+//            PL_halt(1);
             qDebug() << "lib initialize error -(";
         }
         else

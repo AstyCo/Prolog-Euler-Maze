@@ -1,6 +1,7 @@
 #ifndef GENERATIONSTATE_H
 #define GENERATIONSTATE_H
 
+#include "cellobject.h"
 #include <QObject>
 
 #include <SWI-cpp.h>
@@ -14,9 +15,9 @@ public:
     enum State{
         startState,
         makeFirstHelperState,
-        firstSetBordersState,
+        setBordersState,
         bodyNewRowIndexesState,
-        bodySetBottomBordersState,
+        lastBodySetBottomBordersState,
         finishNewRowIndexesState,
         finishRowHState,
         completedState,
@@ -28,23 +29,31 @@ public:
     explicit GenerationState(QObject *parent = 0);
 
     void initState(int rowCnt);
+//    fid_t fid() const;
     bool first() const;
     bool last() const;
     int rowsRemain() const;
+    term_t lastRowT() const;
+
+signals:
+    void stateChanged(GenerationState::State state);
 
 public:
 
+//    fid_t m_frameId;
     functor_t m_newRowIndexesF;
     functor_t m_setBottomBordersF;
 
-    term_t *m_lastRowT;
+    QVector<Cell> m_lastRow;
     int m_rowsRemain;
 
     State state() const;
     void setState(const State &state);
 
+    void setLastRow(const QVector<Cell> &lastRow);
+
 public slots:
-    void onRowReaded(term_t *rowT);
+    void onRowReaded(const QVector<Cell> &row);
     void setRowsRemain(int rowsRemain);
     void reduceRowsRemain();
 

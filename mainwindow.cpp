@@ -14,6 +14,7 @@
 #include <QGroupBox>
 #include <QCheckBox>
 #include <QLabel>
+#include <QTimer>
 
 
 #include <QDebug>
@@ -76,6 +77,7 @@ void MainWindow::read_euler_cell(term_t eulerCellT, Cell &cell)
         Q_ASSERT(false);
     if(!PL_get_arg(2,eulerCellT,cellT))
         Q_ASSERT(false);
+//    qDebug() << pl_display(eulerCellT);
     read_cell(cellT,cell);
 
     cell.euler = true;
@@ -271,22 +273,47 @@ QVector<QVector<Cell> > &MainWindow::convertRepresentation(QVector<QVector<Cell 
     return matrix;
 }
 
-void MainWindow::makeStep()
+void MainWindow::makeStep(bool lock)
 {
-    qDebug() << "makeStep";
+//    qDebug()<< "started";
 
-    term_t *rowT ,
-            ans=PL_new_term_ref();
-    *rowT = PL_new_term_ref();
+    Q_ASSERT(ui->actionInteractive->isChecked());
+
+    PlCall("consult(\'../Prolog-Euler-Maze/maze.pl\')");
+
+    term_t rowT = PL_new_term_ref() ,
+            ans =PL_new_term_ref();
+
 
     switch(m_state->state())
     {
     case GenerationState::completedState:
+    {
         qDebug() << "completed";
         return;
+    }
     case GenerationState::startState:
     {
-        qDebug() << "startState";
+        QPair<int,int> in,out;
+        term_t inT = PL_new_term_ref(),outT = PL_new_term_ref();
+        functor_t f = PL_new_functor(PL_new_atom("entraceGenerator"),4);
+
+        term_t rT = PL_new_term_ref(),cT = PL_new_term_ref();
+
+        Q_ASSERT(PL_put_integer(rT,m_paramWidget->row()));
+        Q_ASSERT(PL_put_integer(cT,m_paramWidget->col()));
+
+        Q_ASSERT(PL_cons_functor(ans,f,rT,cT,inT,outT));
+        Q_ASSERT(PL_call(ans,NULL));
+
+        read_entrace(inT,in);
+        read_entrace(outT,out);
+
+        m_scene->clearEntraces();
+        m_scene->setEntrace(in.first,in.second);
+        m_scene->setEntrace(out.first,out.second);
+
+
         functor_t makeFirstHelperF = PL_new_functor(PL_new_atom("makeFirstHelper"),3);
         term_t colT = PL_new_term_ref(),
                 indexT = PL_new_term_ref();
@@ -296,53 +323,126 @@ void MainWindow::makeStep()
         if(!PL_put_integer(colT,m_paramWidget->col()))
             Q_ASSERT(false);
 
-        if(!PL_cons_functor(ans,makeFirstHelperF,colT,indexT,*rowT))
+        if(!PL_cons_functor(ans,makeFirstHelperF,colT,indexT,rowT))
             Q_ASSERT(false);
 
         if(PL_call(ans,NULL))
         {
             QVector<Cell> row;
-            qDebug() << "startState";
-            read_euler_row(*rowT,row,0);
-            qDebug() << "startState";
+            read_euler_row(rowT,row,0);
             m_scene->appendRow(row);
-            m_state->onRowReaded(rowT);
+            m_state->setLastRow(row);
         }
         m_state->setState(GenerationState::makeFirstHelperState);
-
-        qDebug() << "startState "<<pl_display(*rowT);
-        return;
+        break;
     }
     case GenerationState::makeFirstHelperState:
     {
-        qDebug() << "makeFirstHelperState";
         functor_t setBordersF = PL_new_functor(PL_new_atom("setBorders"),2);
+        Q_ASSERT(PL_cons_functor(ans,setBordersF,m_state->lastRowT(),rowT));
 
-        if(!PL_cons_functor(ans,setBordersF,m_state->m_lastRowT,*rowT))
-            Q_ASSERT(false);
+        Q_ASSERT(PL_call(ans,NULL));
 
-        if(PL_call(ans,NULL))
+        QVector<Cell> row;
+
+        read_euler_row(rowT,row,0);
+
+        m_scene->updateRow(row,0);
+        m_state->onRowReaded(row);
+
+        m_state->setState(GenerationState::setBordersState);
+        break;
+    }
+    case GenerationState::setBordersState:
+    {
+        if(m_state->last())
         {
-            QVector<Cell> row;
-
-            qDebug() << pl_display(*m_state->m_lastRowT);
-            qDebug() << pl_display(*rowT);
-
-            read_euler_row(*rowT,row,0);
-            m_scene->updateRow(row,0);
-
-            m_state->onRowReaded(rowT);
+            m_state->setState(GenerationState::lastBodySetBottomBordersState);
+            makeStep(false);
+            if(lock)
+                m_mutex.unlock();
+            return;
         }
-        m_state->setState(GenerationState::firstSetBordersState);
+        Q_ASSERT(PL_cons_functor(ans,m_state->m_newRowIndexesF,m_state->lastRowT(),rowT));
+
+        Q_ASSERT(PL_call(ans,NULL));
+
+        QVector<Cell> row;
+
+        read_euler_row(rowT,row,m_scene->objectsSize());
+
+        m_scene->appendRow(row);
+        m_state->setLastRow(row);
+
+        m_state->setState(GenerationState::bodyNewRowIndexesState);
+        break;
+    }
+    case GenerationState::bodyNewRowIndexesState:
+    {
+        Q_ASSERT(PL_cons_functor(ans,m_state->m_setBottomBordersF,m_state->lastRowT(),rowT));
+
+        Q_ASSERT(PL_call(ans,NULL));
+
+        QVector<Cell> row;
+
+        read_euler_row(rowT,row,m_scene->objectsSize()-1);
+
+        m_scene->updateRow(row,m_scene->objectsSize()-1);
+        m_state->onRowReaded(row);
+
+        m_state->setState(GenerationState::setBordersState);
+        break;
+    }
+    case GenerationState::lastBodySetBottomBordersState:
+    {
+        Q_ASSERT(PL_cons_functor(ans,m_state->m_newRowIndexesF,m_state->lastRowT(),rowT));
+
+        Q_ASSERT(PL_call(ans,NULL));
+
+        QVector<Cell> row;
+
+        read_euler_row(rowT,row,m_scene->objectsSize());
+
+        m_scene->appendRow(row);
+        m_state->setLastRow(row);
+
+        m_state->setState(GenerationState::finishNewRowIndexesState);
+        break;
+    }
+    case GenerationState::finishNewRowIndexesState:
+    {
+        functor_t f = PL_new_functor(PL_new_atom("finishRowH"),2);
+        Q_ASSERT(PL_cons_functor(ans,f,m_state->lastRowT(),rowT));
+
+        Q_ASSERT(PL_call(ans,NULL));
+
+        QVector<Cell> row;
+
+        read_euler_row(rowT,row,m_scene->objectsSize()-1);
+
+        m_scene->updateRow(row,m_scene->objectsSize()-1);
+        m_state->onRowReaded(row);
+
+        m_state->setState(GenerationState::finishRowHState);
+        break;
+    }
+    case GenerationState::finishRowHState:
+    {
+        m_scene->convertRepresentation();
+        m_state->setState(GenerationState::completedState);
         return;
     }
+
     default:
         qDebug() << "default makeStep case";
+        if(lock)
+            m_mutex.unlock();
         return;
-
-
     }
-
+    m_scene->convertRepresentation(true);
+    if(lock)
+        m_mutex.unlock();
+//    qDebug()<< "finished";
 }
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -356,15 +456,16 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowIcon(QIcon(":/resources/euler.bmp"));
 
     m_state = new GenerationState(this);
+    m_timer = new QTimer(this);
     connect(ui->actionMake_step,SIGNAL(triggered(bool)),this,SLOT(makeStep()));
-
+    connect(m_state,SIGNAL(stateChanged(GenerationState::State)),this,SLOT(onStateChanged(GenerationState::State)));
+    connect(m_timer,SIGNAL(timeout()),this,SLOT(makeStep()));
     initScene();
     installMenus();
 }
 
 void MainWindow::generateMaze()
 {
-    qDebug() << "generateMaze";
     PlCall("consult(\'../Prolog-Euler-Maze/maze.pl\')");
     term_t maze=PL_new_term_ref(),ans=PL_new_term_ref(),cols=PL_new_term_ref(),rows=PL_new_term_ref();
 
@@ -384,7 +485,7 @@ void MainWindow::generateMaze()
 
         read_euler_maze(maze, in, out, matrix);
 
-        if(!(m_scene->rows()==m_paramWidget->row() && m_scene->columns()==m_paramWidget->col()))
+        if(!(m_scene->objectsSize()==m_paramWidget->row() && m_scene->objectsCols()==m_paramWidget->col()))
             m_scene->initScene(m_paramWidget->row(),m_paramWidget->col());
 
         m_scene->updateItems(convertRepresentation(matrix));
@@ -400,6 +501,53 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::keyPressEvent(QKeyEvent *)
+{
+    QVector<Cell> testRow;
+    Cell testCell1,testCell2;
+    testCell1.euler = true;
+    testCell1.index = 1;
+    testCell1.r = 0;
+    testCell1.c = 0;
+    testCell2.euler = true;
+    testCell2.index = 1;
+    testCell2.r = 0;
+    testCell2.c = 1;
+
+    testRow.append(testCell1);
+    testRow.append(testCell2);
+
+    qDebug() << pl_display(row_to_term(testRow));
+}
+
+term_t MainWindow::row_to_term(const QVector<Cell> &row)
+{
+    functor_t  makeEulerCellF = PL_new_functor(PL_new_atom("makeEulerCell"),4);
+    term_t l = PL_new_term_ref();
+    PL_put_nil(l);
+
+    for(int i = row.size() - 1; i>=0; --i)
+    {
+        Cell cell = row[i];
+        term_t h = PL_new_term_ref(),
+                indexT = PL_new_term_ref(),
+                rightBorderT = PL_new_term_ref(),
+                bottomBorderT = PL_new_term_ref(),
+                ansT = PL_new_term_ref();
+
+        Q_ASSERT(cell.euler);
+        Q_ASSERT(PL_put_integer(indexT,cell.index));
+        Q_ASSERT(PL_put_atom_chars(rightBorderT,(cell.right)?"y":"n"));
+        Q_ASSERT(PL_put_atom_chars(bottomBorderT,(cell.bottom)?"y":"n"));
+
+        Q_ASSERT(PL_cons_functor(ansT,makeEulerCellF,indexT,rightBorderT,bottomBorderT,h));
+        Q_ASSERT(PL_call(ansT,NULL));
+
+        Q_ASSERT(PL_cons_list(l,h,l));
+    }
+    return l;
+}
+
 void MainWindow::installMenus()
 {
     // MAZE PARAMETERS INSTALL
@@ -408,9 +556,6 @@ void MainWindow::installMenus()
 
     connect(m_paramWidget.data(),SIGNAL(rowsChanged(int)),this,SLOT(initState()));
     connect(m_paramWidget.data(),SIGNAL(colsChanged(int)),this,SLOT(initState()));
-
-    m_paramWidget->setRow(20);
-    m_paramWidget->setCol(30);
 
     p_action->setDefaultWidget(m_paramWidget);
     ui->menuParameters->addAction(p_action);
@@ -436,12 +581,6 @@ void MainWindow::installMenus()
     QWidgetAction *rp_action = new QWidgetAction(this);
 
     QGroupBox* speedSelectionWidget = new QGroupBox(QString::fromUtf8("Скорость генерации"),ui->toolBar);
-    QSlider *wd = new QSlider();
-    wd->setOrientation(Qt::Horizontal);
-    wd->setMinimum(0);
-    wd->setMaximum(100);
-
-
     m_runParamsSlider = new QSlider(speedSelectionWidget);
 
     setStyleSheet(
@@ -461,8 +600,9 @@ void MainWindow::installMenus()
                   "}");
 
     m_runParamsSlider->setOrientation(Qt::Horizontal);
-    m_runParamsSlider->setMinimum(0);
-    m_runParamsSlider->setMaximum(100);
+    m_runParamsSlider->setMinimum(1);
+    m_runParamsSlider->setMaximum(10);
+    connect(m_runParamsSlider,SIGNAL(sliderMoved(int)),this,SLOT(on_actionRun_triggered()));
 
     QVBoxLayout *gs_layout = new QVBoxLayout;
     gs_layout->addWidget(m_runParamsSlider);
@@ -497,6 +637,8 @@ void MainWindow::initState()
         if(m_state && m_paramWidget)
             m_state->initState(m_paramWidget->row());
     }
+    else
+        m_timer->stop();
 }
 
 void MainWindow::on_actionInteractive_toggled(bool val)
@@ -517,9 +659,14 @@ void MainWindow::on_actionInteractive_toggled(bool val)
 
 void MainWindow::on_actionRe_triggered()
 {
+    if(m_timer)
+        m_timer->stop();
+
     if(ui->actionInteractive->isChecked())
     {
         initState();
+        if(ui->actionRun->isChecked())
+            ui->actionRun->setChecked(false);
     }
     else
     {
@@ -535,4 +682,21 @@ void MainWindow::initScene()
 
     m_scene->setViewportMode(ui->graphicsView1->viewport(),MazeScene::mazeNoInfo);
     m_scene->setViewportMode(ui->graphicsView2->viewport(),MazeScene::mazeWithInfo);
+}
+
+void MainWindow::on_actionRun_triggered()
+{
+    qDebug() << "on_actionRun_triggered "<< m_runParamsSlider->value();
+    Q_ASSERT(!m_timer.isNull());
+    Q_ASSERT(ui->actionInteractive->isChecked());
+    m_timer->stop();
+    if(ui->actionRun->isChecked() && m_state && m_state->state() != GenerationState::completedState)
+        m_timer->start(1000.0 / m_runParamsSlider->value());
+}
+
+void MainWindow::onStateChanged(GenerationState::State state)
+{
+    Q_ASSERT(!m_timer.isNull());
+    if(state == GenerationState::completedState)
+        m_timer->stop();
 }

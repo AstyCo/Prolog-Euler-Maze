@@ -121,16 +121,34 @@ void CellObject::setCell(const Cell &cell)
 
 QDebug operator<<(QDebug d, const Cell &cell) {
 
-    d << "Cell("
-      <<"right: "
-     <<cell.right
-    <<",bottom: "
-    <<cell.bottom
-    <<",left: "
-    <<cell.left
-    <<",top: "
-    <<cell.top
-    <<")";
+    if(cell.euler)
+    {
+        d << "Cell("
+          <<"id: "
+         <<cell.index
+        <<",[right: "
+        <<cell.right
+        <<",bottom: "
+        <<cell.bottom
+        <<",left: "
+        <<cell.left
+        <<",top: "
+        <<cell.top
+        <<"])";
+    }
+    else
+    {
+        d << "Cell("
+          <<"right: "
+         <<cell.right
+        <<",bottom: "
+        <<cell.bottom
+        <<",left: "
+        <<cell.left
+        <<",top: "
+        <<cell.top
+        <<")";
+    }
 
     return d;
 }

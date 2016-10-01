@@ -38,14 +38,20 @@ public:
     bool isEntrace(const QPair<int,int> & pos) const;
     void clearEntraces();
     int objectsSize() const;
+    int objectsCols() const;
+
 
 
 public slots:
+    void updateEntraces();
+    void convertRepresentation(bool only_top = false);
     void clear();
     void hideItems();
     void appendRow(const QVector<Cell> &row);
 
 private:
+    void updateEntracesBorders(int row, int column);
+
     QVector<QPair<int,int> > m_entraces;
     QMap<QPointer<QWidget>,viewMode> m_modes;
     QVector<QVector<QPointer<CellObject> > > m_objects;

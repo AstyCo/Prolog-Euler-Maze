@@ -2,8 +2,10 @@
 #define MAINWINDOW_H
 
 #include "mazescene.h"
+#include "generationstate.h"
 
 #include <QMainWindow>
+#include <QMutex>
 
 #include <SWI-cpp.h>
 #include <SWI-Prolog.h>
@@ -16,7 +18,8 @@ class MainWindow;
 
 class ParametersWidget;
 class QSlider;
-class GenerationState;
+
+
 
 class MainWindow : public QMainWindow
 {
@@ -27,6 +30,9 @@ public:
 
     ~MainWindow();
 
+    void keyPressEvent(QKeyEvent *);
+
+    static term_t row_to_term(const QVector<Cell> &row);
     static void read_entrace(term_t entraceT, QPair<int,int>& entrace);
     static void read_cell_var(term_t varT, bool& var);
     static void read_cell(term_t cellT, Cell &cell);
@@ -41,11 +47,14 @@ public slots:
     void initState();
 
 private slots:
-    void makeStep();
+    void makeStep(bool lock = true);
     void generateMaze();
     void on_actionInteractive_toggled(bool arg1);
 
     void on_actionRe_triggered();
+
+    void on_actionRun_triggered();
+    void onStateChanged(GenerationState::State);
 
 private:
     void initScene();
@@ -59,6 +68,8 @@ private:
     QPointer<MazeScene> m_scene;
     QPointer<ParametersWidget> m_paramWidget;
     QPointer<QSlider> m_runParamsSlider;
+    QPointer<QTimer> m_timer;
+    QMutex m_mutex;
 };
 
 #endif // MAINWINDOW_H

@@ -6,27 +6,32 @@
 
 GenerationState::GenerationState(QObject *parent) : QObject(parent)
 {
-    m_lastRowT = 0;
+//    m_frameId = 0;
     initState(-1);
 }
 
 void GenerationState::initState(int rowCnt)
 {
+//    if(m_frameId)
+//        PL_close_foreign_frame(m_frameId);
+//    m_frameId = PL_open_foreign_frame();
     m_state = startState;
-    if(m_lastRowT)
-        delete m_lastRowT;
-    m_lastRowT = 0;
+    m_lastRow.clear();
     m_rowsRemain = rowCnt;
 
-    PlCall("consult(\'../Prolog-Euler-Maze/maze.pl\')");
-    m_newRowIndexesF = PL_new_functor(PL_new_atom("newRowIndexes"),2);;
-    m_setBottomBordersF = PL_new_functor(PL_new_atom("setBottomBorders"),2);;
+    m_newRowIndexesF = PL_new_functor(PL_new_atom("newRowIndexes"),2);
+    m_setBottomBordersF = PL_new_functor(PL_new_atom("setBottomBorders"),2);
 
 }
 
+//PL_fid_t GenerationState::fid() const
+//{
+//    return m_frameId;
+//}
+
 bool GenerationState::first() const
 {
-    return m_lastRowT == 0;
+    return m_lastRow.isEmpty();
 }
 
 bool GenerationState::last() const
@@ -35,15 +40,10 @@ bool GenerationState::last() const
 }
 
 
-void GenerationState::onRowReaded(term_t *rowT)
+void GenerationState::onRowReaded(const QVector<Cell> &row)
 {
-    qDebug() << "onRowReaded";
-    if(m_lastRowT)
-        delete m_lastRowT;
-    qDebug() << "onRowReaded";
-    m_lastRowT = rowT;
+    m_lastRow = row;
     reduceRowsRemain();
-    qDebug() << "onRowReaded";
 }
 
 int GenerationState::rowsRemain() const
@@ -51,17 +51,24 @@ int GenerationState::rowsRemain() const
     return m_rowsRemain;
 }
 
+term_t GenerationState::lastRowT() const
+{
+    return MainWindow::row_to_term(m_lastRow);
+}
+
+void GenerationState::setLastRow(const QVector<Cell> &lastRow)
+{
+    m_lastRow = lastRow;
+}
+
 void GenerationState::setRowsRemain(int rowsRemain)
 {
     m_rowsRemain = rowsRemain;
-    if(!m_rowsRemain)
-        setState(completedState);
 }
 
 void GenerationState::reduceRowsRemain()
 {
-    if(!--m_rowsRemain)
-        setState(completedState);
+    --m_rowsRemain;
 }
 
 GenerationState::State GenerationState::state() const
@@ -72,5 +79,6 @@ GenerationState::State GenerationState::state() const
 void GenerationState::setState(const State &state)
 {
     m_state = state;
+    emit stateChanged(state);
 }
 

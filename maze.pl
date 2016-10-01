@@ -50,6 +50,9 @@ entraceGenerator(R,C,cell(InX,InY),cell(OutX,OutY)):-
 	OutX is R - InX - 1,
 	OutY is C - InY - 1.
 
+%uses from C++ code
+makeEulerCell(I,Rb,Bb,C):-
+	C = eulerCell(I,cell(Rb,Bb)).
 
 %matrixGenerator(?RowCount,?ColumnCount,?EulerMatrix)
 matrixGenerator(0,_,[]):-!.

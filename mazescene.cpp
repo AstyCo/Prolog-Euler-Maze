@@ -1,4 +1,5 @@
 #include "mazescene.h"
+#include "mainwindow.h"
 
 #include <QDebug>
 
@@ -40,7 +41,6 @@ void MazeScene::initScene(int rows, int columns)
         setSceneRect(0,0,0,0);
     else
         setSceneRect(itemsBoundingRect().adjusted(-2,-2,2,2));
-    qDebug() << "initScene";
 }
 
 void MazeScene::updateItems(const QVector<QVector<Cell> > &matrix)
@@ -66,24 +66,8 @@ void MazeScene::updateRow(const QVector<Cell> &rowC, int index)
 
 void MazeScene::setEntrace(int row, int column)
 {
-    if(row==0)
-    {
-        m_objects[row][column]->cell().top = false;
-    }
-    else if(column == 0)
-    {
-        m_objects[row][column]->cell().left = false;
-    }
-    else if (row==m_rows-1)
-    {
-        m_objects[row][column]->cell().bottom = false;
-    }
-    else
-    {
-        m_objects[row][column]->cell().right = false;
-    }
-
     m_entraces.append(QPair<int,int>(row,column));
+    updateEntraces();
 }
 
 int MazeScene::rows() const
@@ -130,6 +114,51 @@ int MazeScene::objectsSize() const
     return m_objects.size();
 }
 
+int MazeScene::objectsCols() const
+{
+    if(m_objects.isEmpty())
+        return 0;
+    return m_objects[0].size();
+}
+
+void MazeScene::updateEntraces()
+{
+    foreach(const QVector<QPointer<CellObject> >& row, m_objects)
+        foreach(const QPointer<CellObject> &o_p, row)
+        {
+            Cell &cell = o_p->cell();
+            if(isEntrace(cell.pos()))
+                updateEntracesBorders(cell.r,cell.c);
+        }
+}
+
+void MazeScene::convertRepresentation(bool only_top)
+{
+    int rows = m_objects.size(),
+            columns = m_columns;
+    QVector<bool> lastRowB(columns);
+    bool lastCellR;
+
+    for(int i = 0; i<rows; ++i)
+    {
+        for(int j=0; j<columns; ++j)
+        {
+            Cell &cell = m_objects[i][j]->cell();
+
+            cell.left = (!j || lastCellR);
+            cell.right = (j==columns-1 || cell.right);
+            cell.top = (!i || lastRowB[j]);
+            if(!only_top)
+                cell.bottom = (i==rows-1 || cell.bottom);
+
+            lastRowB[j] = cell.bottom;
+            lastCellR = cell.right;
+        }
+    }
+    updateEntraces();
+    update();
+}
+
 void MazeScene::clear()
 {
     initScene(0,0);
@@ -137,7 +166,6 @@ void MazeScene::clear()
 
 void MazeScene::hideItems()
 {
-    qDebug() << "hideItems";
     for(int i=0;i<m_rows;++i)
     {
         for(int j=0;j<m_columns;++j)
@@ -166,6 +194,26 @@ void MazeScene::appendRow(const QVector<Cell> &rowC)
     m_objects.append(row);
 
     setSceneRect(itemsBoundingRect().adjusted(-2,-2,2,2));
+}
+
+void MazeScene::updateEntracesBorders(int row, int column)
+{
+    if(row==0)
+    {
+        m_objects[row][column]->cell().top = false;
+    }
+    else if(column == 0)
+    {
+        m_objects[row][column]->cell().left = false;
+    }
+    else if (row==m_rows-1)
+    {
+        m_objects[row][column]->cell().bottom = false;
+    }
+    else
+    {
+        m_objects[row][column]->cell().right = false;
+    }
 }
 
 void MazeScene::setColumns(int columns)
