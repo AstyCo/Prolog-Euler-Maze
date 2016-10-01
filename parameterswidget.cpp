@@ -5,7 +5,10 @@ ParametersWidget::ParametersWidget(QWidget *parent) :
     QWidget(parent),
     ui(new Ui::ParametersWidget)
 {
-    ui->setupUi(this);   
+    ui->setupUi(this);
+
+    connect(ui->spinBoxRowCnt,SIGNAL(valueChanged(int)),this,SIGNAL(rowsChanged(int)));
+    connect(ui->spinBoxColCnt,SIGNAL(valueChanged(int)),this,SIGNAL(colsChanged(int)));
 }
 
 ParametersWidget::~ParametersWidget()
@@ -25,7 +28,7 @@ void ParametersWidget::setRow(int row)
 
 int ParametersWidget::col() const
 {
-    ui->spinBoxColCnt->value();
+    return ui->spinBoxColCnt->value();
 }
 
 void ParametersWidget::setCol(int col)

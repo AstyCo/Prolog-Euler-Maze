@@ -2,7 +2,8 @@
 #include "ui_mainwindow.h"
 #include "parameterswidget.h"
 #include "cellobject.h"
-
+#include "generationstate.h"
+#include "prolog.h"
 
 
 #include <QPainter>
@@ -11,6 +12,8 @@
 #include <QWidgetAction>
 #include <QToolButton>
 #include <QGroupBox>
+#include <QCheckBox>
+#include <QLabel>
 
 
 #include <QDebug>
@@ -22,17 +25,21 @@ void MainWindow::read_entrace(term_t entraceT, QPair<int,int>& entrace)
     term_t entraceX = PL_new_term_ref(),
             entraceY = PL_new_term_ref();
 
-    PL_get_arg(1,entraceT,entraceX);
-    PL_get_arg(2,entraceT,entraceY);
-
-    PL_get_integer(entraceX,&entrace.first);
-    PL_get_integer(entraceY,&entrace.second);
+    if(!PL_get_arg(1,entraceT,entraceX))
+        Q_ASSERT(false);
+    if(!PL_get_arg(2,entraceT,entraceY))
+        Q_ASSERT(false);
+    if(!PL_get_integer(entraceX,&entrace.first))
+        Q_ASSERT(false);
+    if(!PL_get_integer(entraceY,&entrace.second))
+        Q_ASSERT(false);
 }
 
 void MainWindow::read_cell_var(term_t varT, bool& var)
 {
     char *s;
-    PL_get_chars(varT, &s, CVT_ALL);
+    if(!PL_get_chars(varT, &s, CVT_ALL))
+        Q_ASSERT(false);
 //    qDebug()<<s;
 
     if(s[0]=='y')
@@ -52,8 +59,10 @@ void MainWindow::read_cell(term_t cellT, Cell &cell)
 {
     term_t rightT = PL_new_term_ref(), bottomT = PL_new_term_ref();
 
-    PL_get_arg(1,cellT,rightT);
-    PL_get_arg(2,cellT,bottomT);
+    if(!PL_get_arg(1,cellT,rightT))
+        Q_ASSERT(false);
+    if(!PL_get_arg(2,cellT,bottomT))
+        Q_ASSERT(false);
 
     read_cell_var(rightT,cell.right);
     read_cell_var(bottomT,cell.bottom);
@@ -63,26 +72,31 @@ void MainWindow::read_euler_cell(term_t eulerCellT, Cell &cell)
 {
     term_t cellT = PL_new_term_ref(), indexT = PL_new_term_ref();
 
-    PL_get_arg(1,eulerCellT,indexT);
-    PL_get_arg(2,eulerCellT,cellT);
-
+    if(!PL_get_arg(1,eulerCellT,indexT))
+        Q_ASSERT(false);
+    if(!PL_get_arg(2,eulerCellT,cellT))
+        Q_ASSERT(false);
     read_cell(cellT,cell);
 
     cell.euler = true;
-    PL_get_integer(indexT,&cell.index);
+    if(!PL_get_integer(indexT,&cell.index))
+        Q_ASSERT(false);
 }
 
 void MainWindow::read_euler_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<Cell > > &matrix)
 {
     term_t inT = PL_new_term_ref(),outT = PL_new_term_ref(),matrixLT = PL_new_term_ref();
 
-    PL_get_arg(1,mazeT,inT);
-        read_entrace(inT,in);
+    if(!PL_get_arg(1,mazeT,inT))
+        Q_ASSERT(false);
+    read_entrace(inT,in);
 
-    PL_get_arg(2,mazeT,outT);
-        read_entrace(outT,out);
+    if(!PL_get_arg(2,mazeT,outT))
+        Q_ASSERT(false);
+    read_entrace(outT,out);
 
-    PL_get_arg(3,mazeT,matrixLT);
+    if(!PL_get_arg(3,mazeT,matrixLT))
+        Q_ASSERT(false);
 
     {
         term_t head = PL_new_term_ref();
@@ -119,13 +133,16 @@ void MainWindow::read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, 
 {
     term_t inT = PL_new_term_ref(),outT = PL_new_term_ref(),matrixLT = PL_new_term_ref();
 
-    PL_get_arg(1,mazeT,inT);
-        read_entrace(inT,in);
+    if(!PL_get_arg(1,mazeT,inT))
+        Q_ASSERT(false);
+    read_entrace(inT,in);
 
-    PL_get_arg(2,mazeT,outT);
-        read_entrace(outT,out);
+    if(!PL_get_arg(2,mazeT,outT))
+        Q_ASSERT(false);
+    read_entrace(outT,out);
 
-    PL_get_arg(3,mazeT,matrixLT);
+    if(!PL_get_arg(3,mazeT,matrixLT))
+        Q_ASSERT(false);
 
     {
         term_t head = PL_new_term_ref();
@@ -158,8 +175,7 @@ void MainWindow::read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, 
 QString MainWindow::pl_display(term_t t)
 {
     QString res;
-    functor_t functor;
-    int arity, n;
+    int n;
     size_t len;
     char *s;
 
@@ -169,11 +185,13 @@ QString MainWindow::pl_display(term_t t)
     case PL_ATOM:
     case PL_INTEGER:
     case PL_FLOAT:
-        PL_get_chars(t, &s, CVT_ALL);
+        if(!PL_get_chars(t, &s, CVT_ALL))
+            Q_ASSERT(false);
         res=s;
         break;
     case PL_STRING:
-        PL_get_string_chars(t, &s, &len);
+        if(!PL_get_string_chars(t, &s, &len))
+            Q_ASSERT(false);
         res=QString('\"')+s+'\"';
         break;
     case PL_TERM:
@@ -182,13 +200,15 @@ QString MainWindow::pl_display(term_t t)
         atom_t name;
         int arity;
 
-        PL_get_name_arity(t, &name, &arity);
+        if(!PL_get_name_arity(t, &name, &arity))
+            Q_ASSERT(false);
         res+=PL_atom_chars(name);
         if(arity>0)
             res+="(";
         for(n=1; n<=arity; n++)
         {
-        PL_get_arg(n, t, a);
+        if(!PL_get_arg(n, t, a))
+            Q_ASSERT(false);
 
         if ( n > 1 )
             res+=",";
@@ -253,6 +273,75 @@ QVector<QVector<Cell> > &MainWindow::convertRepresentation(QVector<QVector<Cell 
 
 void MainWindow::makeStep()
 {
+    qDebug() << "makeStep";
+
+    term_t *rowT ,
+            ans=PL_new_term_ref();
+    *rowT = PL_new_term_ref();
+
+    switch(m_state->state())
+    {
+    case GenerationState::completedState:
+        qDebug() << "completed";
+        return;
+    case GenerationState::startState:
+    {
+        qDebug() << "startState";
+        functor_t makeFirstHelperF = PL_new_functor(PL_new_atom("makeFirstHelper"),3);
+        term_t colT = PL_new_term_ref(),
+                indexT = PL_new_term_ref();
+
+        if(!PL_put_integer(indexT,1))
+            Q_ASSERT(false);
+        if(!PL_put_integer(colT,m_paramWidget->col()))
+            Q_ASSERT(false);
+
+        if(!PL_cons_functor(ans,makeFirstHelperF,colT,indexT,*rowT))
+            Q_ASSERT(false);
+
+        if(PL_call(ans,NULL))
+        {
+            QVector<Cell> row;
+            qDebug() << "startState";
+            read_euler_row(*rowT,row,0);
+            qDebug() << "startState";
+            m_scene->appendRow(row);
+            m_state->onRowReaded(rowT);
+        }
+        m_state->setState(GenerationState::makeFirstHelperState);
+
+        qDebug() << "startState "<<pl_display(*rowT);
+        return;
+    }
+    case GenerationState::makeFirstHelperState:
+    {
+        qDebug() << "makeFirstHelperState";
+        functor_t setBordersF = PL_new_functor(PL_new_atom("setBorders"),2);
+
+        if(!PL_cons_functor(ans,setBordersF,m_state->m_lastRowT,*rowT))
+            Q_ASSERT(false);
+
+        if(PL_call(ans,NULL))
+        {
+            QVector<Cell> row;
+
+            qDebug() << pl_display(*m_state->m_lastRowT);
+            qDebug() << pl_display(*rowT);
+
+            read_euler_row(*rowT,row,0);
+            m_scene->updateRow(row,0);
+
+            m_state->onRowReaded(rowT);
+        }
+        m_state->setState(GenerationState::firstSetBordersState);
+        return;
+    }
+    default:
+        qDebug() << "default makeStep case";
+        return;
+
+
+    }
 
 }
 
@@ -262,45 +351,43 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+
+    setWindowTitle(QString::fromUtf8("Алгоритм Эллера [Qt & SWI-PROLOG]"));
+    setWindowIcon(QIcon(":/resources/euler.bmp"));
+
+    m_state = new GenerationState(this);
+    connect(ui->actionMake_step,SIGNAL(triggered(bool)),this,SLOT(makeStep()));
+
+    initScene();
     installMenus();
 }
 
 void MainWindow::generateMaze()
 {
     qDebug() << "generateMaze";
-
     PlCall("consult(\'../Prolog-Euler-Maze/maze.pl\')");
     term_t maze=PL_new_term_ref(),ans=PL_new_term_ref(),cols=PL_new_term_ref(),rows=PL_new_term_ref();
 
-    PL_put_integer(rows,m_paramWidget->row());
-    PL_put_integer(cols,m_paramWidget->col());
-
+    if(!PL_put_integer(rows,m_paramWidget->row()))
+        Q_ASSERT(false);
+    if(!PL_put_integer(cols,m_paramWidget->col()))
+        Q_ASSERT(false);
 
     functor_t mazeGenerator = PL_new_functor(PL_new_atom("eulerMazeGenerator"),3);
     if(!PL_cons_functor(ans,mazeGenerator,rows,cols,maze))
-        qDebug() << "!PL_cons_functor(ans,mazeGenerator,rows,cols,maze)";
+        Q_ASSERT(false);
+
     if(PL_call(ans,NULL))
     {
         QPair<int,int> in, out;
         QVector<QVector<Cell > > matrix;
 
-
         read_euler_maze(maze, in, out, matrix);
 
-        if(m_scene.isNull())
-        {
-            m_scene = new MazeScene(this);
-            ui->graphicsView1->setScene(m_scene);
-            ui->graphicsView2->setScene(m_scene);
-
-            m_scene->setViewportMode(ui->graphicsView1->viewport(),MazeScene::mazeNoInfo);
-            m_scene->setViewportMode(ui->graphicsView2->viewport(),MazeScene::mazeWithInfo);
-        }
         if(!(m_scene->rows()==m_paramWidget->row() && m_scene->columns()==m_paramWidget->col()))
             m_scene->initScene(m_paramWidget->row(),m_paramWidget->col());
-        m_scene->updateItems(convertRepresentation(matrix));
 
-        qDebug() << in << out;
+        m_scene->updateItems(convertRepresentation(matrix));
 
         m_scene->clearEntraces();
         m_scene->setEntrace(in.first,in.second);
@@ -318,17 +405,37 @@ void MainWindow::installMenus()
     // MAZE PARAMETERS INSTALL
     QWidgetAction *p_action = new QWidgetAction(this);
     m_paramWidget = new ParametersWidget(this);
+
+    connect(m_paramWidget.data(),SIGNAL(rowsChanged(int)),this,SLOT(initState()));
+    connect(m_paramWidget.data(),SIGNAL(colsChanged(int)),this,SLOT(initState()));
+
     m_paramWidget->setRow(20);
     m_paramWidget->setCol(30);
 
     p_action->setDefaultWidget(m_paramWidget);
     ui->menuParameters->addAction(p_action);
+    // ++
+//    QWidget *igen = new QWidget(ui->menuParameters);
+//    QHBoxLayout *lay = new QHBoxLayout(igen);
+
+//    QCheckBox *checkBox = new QCheckBox();
+//    lay->addWidget(checkBox);
+//    QLabel *lab = new QLabel(igen);
+//    lab->setText(QString::fromUtf8("Интерактивная генерация"));
+//    lay->addWidget(lab);
+//    igen->setLayout(lay);
+
+//    QWidgetAction *checkableAction = new QWidgetAction(ui->menuParameters);
+//    checkableAction->setDefaultWidget(igen);
+//    ui->menuParameters->addAction(checkableAction);
+
+
 
 
     // RUN PARAMETERS INSTALL
     QWidgetAction *rp_action = new QWidgetAction(this);
 
-    QGroupBox* speedSelectionWidget = new QGroupBox(tr("Generation speed"),ui->toolBar);
+    QGroupBox* speedSelectionWidget = new QGroupBox(QString::fromUtf8("Скорость генерации"),ui->toolBar);
     QSlider *wd = new QSlider();
     wd->setOrientation(Qt::Horizontal);
     wd->setMinimum(0);
@@ -369,9 +476,63 @@ void MainWindow::installMenus()
     QToolButton *p_button = qobject_cast<QToolButton*>(ui->toolBar->widgetForAction(ui->actionRun));
     if(p_button)
         p_button->setPopupMode(QToolButton::InstantPopup);
+
+    // REMOVE INTERACTIVE ACTIONS FROM TOOLBAR (DEFAULT)
+    ui->toolBar->removeAction(ui->actionRun);
+    ui->toolBar->removeAction(ui->actionMake_step);
+
 }
 
-void MainWindow::on_actionGenerate_triggered()
+void MainWindow::initState()
 {
-    generateMaze();
+    if(ui->actionInteractive->isChecked())
+    {
+        qDebug()<<"init state";
+        if(m_scene && m_paramWidget)
+        {
+            m_scene->clear();
+            m_scene->setRows(m_paramWidget->row());
+            m_scene->setColumns(m_paramWidget->col());
+        }
+        if(m_state && m_paramWidget)
+            m_state->initState(m_paramWidget->row());
+    }
+}
+
+void MainWindow::on_actionInteractive_toggled(bool val)
+{
+    if(val)
+    {
+        ui->toolBar->addAction(ui->actionRun);
+        ui->toolBar->addAction(ui->actionMake_step);
+    }
+    else
+    {
+        ui->toolBar->removeAction(ui->actionRun);
+        ui->toolBar->removeAction(ui->actionMake_step);
+    }
+
+    on_actionRe_triggered();
+}
+
+void MainWindow::on_actionRe_triggered()
+{
+    if(ui->actionInteractive->isChecked())
+    {
+        initState();
+    }
+    else
+    {
+        generateMaze();
+    }
+}
+
+void MainWindow::initScene()
+{
+    m_scene = new MazeScene(this);
+    ui->graphicsView1->setScene(m_scene);
+    ui->graphicsView2->setScene(m_scene);
+
+    m_scene->setViewportMode(ui->graphicsView1->viewport(),MazeScene::mazeNoInfo);
+    m_scene->setViewportMode(ui->graphicsView2->viewport(),MazeScene::mazeWithInfo);
 }

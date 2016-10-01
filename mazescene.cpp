@@ -5,7 +5,7 @@
 MazeScene::MazeScene(QObject * parent):
     QGraphicsScene(parent)
 {
-
+    m_rows = m_columns = 0;
 }
 
 void MazeScene::initScene(int rows, int columns)
@@ -14,7 +14,7 @@ void MazeScene::initScene(int rows, int columns)
     {
         m_objects.clear();
         m_entraces.clear();
-        clear();
+        QGraphicsScene::clear();
     }
 
     m_rows = rows;
@@ -28,6 +28,7 @@ void MazeScene::initScene(int rows, int columns)
 
             cell->setScene(this);
             cell->setPos(EDGE*j, EDGE*i);
+            cell->setVisible(false);
 
             row.append(cell);
         }
@@ -35,7 +36,11 @@ void MazeScene::initScene(int rows, int columns)
         m_objects.append(row);
     }
 
-    setSceneRect(itemsBoundingRect().adjusted(-2,-2,2,2));
+    if(m_objects.isEmpty())
+        setSceneRect(0,0,0,0);
+    else
+        setSceneRect(itemsBoundingRect().adjusted(-2,-2,2,2));
+    qDebug() << "initScene";
 }
 
 void MazeScene::updateItems(const QVector<QVector<Cell> > &matrix)
@@ -46,6 +51,15 @@ void MazeScene::updateItems(const QVector<QVector<Cell> > &matrix)
         {
             m_objects[i][j]->setCell(matrix[i][j]);
         }
+    }
+    update();
+}
+
+void MazeScene::updateRow(const QVector<Cell> &rowC, int index)
+{
+    for(int j=0;j<rowC.size();++j)
+    {
+        m_objects[index][j]->setCell(rowC[j]);
     }
     update();
 }
@@ -109,6 +123,59 @@ bool MazeScene::isEntrace(const QPair<int,int> &pos) const
 void MazeScene::clearEntraces()
 {
     m_entraces.clear();
+}
+
+int MazeScene::objectsSize() const
+{
+    return m_objects.size();
+}
+
+void MazeScene::clear()
+{
+    initScene(0,0);
+}
+
+void MazeScene::hideItems()
+{
+    qDebug() << "hideItems";
+    for(int i=0;i<m_rows;++i)
+    {
+        for(int j=0;j<m_columns;++j)
+        {
+            m_objects[i][j]->setVisible(false);
+        }
+    }
+    update();
+}
+
+void MazeScene::appendRow(const QVector<Cell> &rowC)
+{
+    int i = m_objects.size();
+    QVector<QPointer<CellObject> > row;
+    for(int j=0;j<rowC.size();++j)
+    {
+        CellObject *cell = new CellObject;
+
+        cell->setScene(this);
+        cell->setPos(EDGE*j, EDGE*i);
+        cell->setCell(rowC[j]);
+
+        row.append(cell);
+    }
+
+    m_objects.append(row);
+
+    setSceneRect(itemsBoundingRect().adjusted(-2,-2,2,2));
+}
+
+void MazeScene::setColumns(int columns)
+{
+    m_columns = columns;
+}
+
+void MazeScene::setRows(int rows)
+{
+    m_rows = rows;
 }
 //#include <QGraphicsSceneMouseEvent>
 

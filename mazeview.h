@@ -12,6 +12,7 @@ public:
 
 protected:
     void wheelEvent(QWheelEvent *event);
+    void paintEvent(QPaintEvent *event);
 
 };
 

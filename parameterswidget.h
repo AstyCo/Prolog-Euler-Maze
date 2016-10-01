@@ -21,6 +21,10 @@ public:
     int col() const;
     void setCol(int col);
 
+signals:
+    void rowsChanged(int);
+    void colsChanged(int);
+
 private:
     Ui::ParametersWidget *ui;
 };

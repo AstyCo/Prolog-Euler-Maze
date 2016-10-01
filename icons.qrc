@@ -5,5 +5,7 @@
         <file>resources/step.png</file>
         <file>resources/play2.png</file>
         <file>resources/updating-arrow.png</file>
+        <file>resources/labyrinth.bmp</file>
+        <file>resources/euler.bmp</file>
     </qresource>
 </RCC>

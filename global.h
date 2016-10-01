@@ -6,4 +6,5 @@
 
 #define BORDER_WIDTH 1
 
+
 #endif // GLOBAL_H

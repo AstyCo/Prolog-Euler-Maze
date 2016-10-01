@@ -35,19 +35,13 @@
      <height>21</height>
     </rect>
    </property>
-   <widget class="QMenu" name="menuMaze">
-    <property name="title">
-     <string>Лабиринт</string>
-    </property>
-    <addaction name="actionGenerate"/>
-    <addaction name="actionInteractiveGeneration"/>
-   </widget>
    <widget class="QMenu" name="menuParameters">
     <property name="title">
-     <string>Число строк/столбцов</string>
+     <string>Параметры</string>
     </property>
+    <addaction name="actionInteractive"/>
+    <addaction name="separator"/>
    </widget>
-   <addaction name="menuMaze"/>
    <addaction name="menuParameters"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>
@@ -69,6 +63,12 @@
    <addaction name="actionMake_step"/>
   </widget>
   <action name="actionGenerate">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
    <property name="text">
     <string>Сгенерировать...</string>
    </property>
@@ -90,7 +90,7 @@
      <normaloff>:/resources/play.png</normaloff>:/resources/play.png</iconset>
    </property>
    <property name="text">
-    <string>Run</string>
+    <string>Запустить</string>
    </property>
    <property name="autoRepeat">
     <bool>false</bool>
@@ -102,7 +102,7 @@
      <normaloff>:/resources/step.png</normaloff>:/resources/step.png</iconset>
    </property>
    <property name="text">
-    <string>Make step</string>
+    <string>Сделать шаг</string>
    </property>
   </action>
   <action name="actionRe">
@@ -111,10 +111,18 @@
      <normaloff>:/resources/updating-arrow.png</normaloff>:/resources/updating-arrow.png</iconset>
    </property>
    <property name="text">
-    <string>Re</string>
+    <string>Новый</string>
    </property>
    <property name="autoRepeat">
     <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionInteractive">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Интерактивная генерация</string>
    </property>
   </action>
  </widget>

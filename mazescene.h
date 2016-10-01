@@ -25,14 +25,25 @@ public:
 
     void initScene(int rows, int columns);
     void updateItems(const QVector<QVector<Cell> >&matrix);
+    void updateRow(const QVector<Cell> &row, int index);
     void setEntrace(int row, int column);
 
     int rows() const;
     int columns() const;
+    void setRows(int rows);
+    void setColumns(int columns);
+
     void setViewportMode(const QPointer<QWidget> &vp, viewMode mode);
     viewMode modeForViewport(const QPointer<QWidget> &vp) const;
     bool isEntrace(const QPair<int,int> & pos) const;
     void clearEntraces();
+    int objectsSize() const;
+
+
+public slots:
+    void clear();
+    void hideItems();
+    void appendRow(const QVector<Cell> &row);
 
 private:
     QVector<QPair<int,int> > m_entraces;

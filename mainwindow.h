@@ -4,9 +4,11 @@
 #include "mazescene.h"
 
 #include <QMainWindow>
+
 #include <SWI-cpp.h>
 #include <SWI-Prolog.h>
 #include <SWI-Stream.h>
+
 
 namespace Ui {
 class MainWindow;
@@ -14,6 +16,7 @@ class MainWindow;
 
 class ParametersWidget;
 class QSlider;
+class GenerationState;
 
 class MainWindow : public QMainWindow
 {
@@ -21,9 +24,6 @@ class MainWindow : public QMainWindow
 
 public:
     explicit MainWindow(QWidget *parent = 0);
-
-    void generateMaze();
-
 
     ~MainWindow();
 
@@ -35,21 +35,27 @@ public:
     static void read_euler_row(term_t rowT,QVector<Cell> &row, int row_index);
     static void read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<Cell > > &matrix);
     static QString pl_display(term_t t);
-
     static QVector<QVector<Cell> > &convertRepresentation(QVector<QVector<Cell > >& matrix);
 
-
+public slots:
+    void initState();
 
 private slots:
     void makeStep();
-    void on_actionGenerate_triggered();
+    void generateMaze();
+    void on_actionInteractive_toggled(bool arg1);
+
+    void on_actionRe_triggered();
 
 private:
+    void initScene();
     void installMenus();
+
 
 
     Ui::MainWindow *ui;
 
+    GenerationState *m_state;
     QPointer<MazeScene> m_scene;
     QPointer<ParametersWidget> m_paramWidget;
     QPointer<QSlider> m_runParamsSlider;

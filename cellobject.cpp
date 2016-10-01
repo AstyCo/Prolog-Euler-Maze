@@ -103,6 +103,7 @@ void CellObject::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
 
 void CellObject::mousePressEvent(QGraphicsSceneMouseEvent *event)
 {
+    Q_UNUSED(event);
     qDebug() << "mousePressEvent "<<m_cell;
     update();
 }
@@ -115,6 +116,7 @@ Cell& CellObject::cell()
 void CellObject::setCell(const Cell &cell)
 {
     m_cell = cell;
+    setVisible(true);
 }
 
 QDebug operator<<(QDebug d, const Cell &cell) {

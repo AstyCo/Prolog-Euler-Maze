@@ -24,7 +24,9 @@ SOURCES += main.cpp\
     cellobject.cpp \
     parameterswidget.cpp \
     parameterswidgetaction.cpp \
-    mazeview.cpp
+    mazeview.cpp \
+    generationstate.cpp \
+    prolog.cpp
 
 HEADERS  += mainwindow.h \
     mazewidget.h \
@@ -33,7 +35,9 @@ HEADERS  += mainwindow.h \
     global.h \
     parameterswidget.h \
     parameterswidgetaction.h \
-    mazeview.h
+    mazeview.h \
+    generationstate.h \
+    prolog.h
 
 FORMS    += mainwindow.ui \
     parameterswidget.ui
@@ -42,3 +46,6 @@ RESOURCES += \
     icons.qrc
 
 DISTFILES +=
+
+CODECFORTR = UTF-8
+CODECFORSRC = UTF-8
