@@ -11,8 +11,6 @@ greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 TARGET = prolog_maze
 TEMPLATE = app
 
-message(LIB: "$$PWD/lib/libswipl.lib")
-
 LIBS += -L"$$PWD/lib" -lswipl -lgcc_s_sjlj-1 -lgmp-10 -lwinpthread-1
 INCLUDEPATH += "$$PWD/include"
 

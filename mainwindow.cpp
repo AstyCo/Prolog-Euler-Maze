@@ -277,8 +277,8 @@ void MainWindow::makeStep(bool lock)
 {
 //    qDebug()<< "started";
 
-    Q_ASSERT(ui->actionInteractive->isChecked());
-
+    if(!ui->actionInteractive->isChecked());
+        Q_ASSERT(false);
     PlCall("consult(\'../Prolog-Euler-Maze/maze.pl\')");
 
     term_t rowT = PL_new_term_ref() ,
@@ -300,11 +300,15 @@ void MainWindow::makeStep(bool lock)
 
         term_t rT = PL_new_term_ref(),cT = PL_new_term_ref();
 
-        Q_ASSERT(PL_put_integer(rT,m_paramWidget->row()));
-        Q_ASSERT(PL_put_integer(cT,m_paramWidget->col()));
+        if(!PL_put_integer(rT,m_paramWidget->row()))
+            Q_ASSERT(false);;
+        if(!PL_put_integer(cT,m_paramWidget->col()))
+            Q_ASSERT(false);
+        if(!PL_cons_functor(ans,f,rT,cT,inT,outT))
+            Q_ASSERT(false);
+        if(!PL_call(ans,NULL))
 
-        Q_ASSERT(PL_cons_functor(ans,f,rT,cT,inT,outT));
-        Q_ASSERT(PL_call(ans,NULL));
+
 
         read_entrace(inT,in);
         read_entrace(outT,out);
@@ -339,9 +343,12 @@ void MainWindow::makeStep(bool lock)
     case GenerationState::makeFirstHelperState:
     {
         functor_t setBordersF = PL_new_functor(PL_new_atom("setBorders"),2);
-        Q_ASSERT(PL_cons_functor(ans,setBordersF,m_state->lastRowT(),rowT));
+        if(!PL_cons_functor(ans,setBordersF,m_state->lastRowT(),rowT))
+            Q_ASSERT(false);
 
-        Q_ASSERT(PL_call(ans,NULL));
+        if(!PL_call(ans,NULL))
+            Q_ASSERT(false);
+
 
         QVector<Cell> row;
 
@@ -363,10 +370,11 @@ void MainWindow::makeStep(bool lock)
                 m_mutex.unlock();
             return;
         }
-        Q_ASSERT(PL_cons_functor(ans,m_state->m_newRowIndexesF,m_state->lastRowT(),rowT));
+        if(!PL_cons_functor(ans,m_state->m_newRowIndexesF,m_state->lastRowT(),rowT))
+            Q_ASSERT(false);
 
-        Q_ASSERT(PL_call(ans,NULL));
-
+        if(!PL_call(ans,NULL))
+            Q_ASSERT(false);
         QVector<Cell> row;
 
         read_euler_row(rowT,row,m_scene->objectsSize());
@@ -379,9 +387,11 @@ void MainWindow::makeStep(bool lock)
     }
     case GenerationState::bodyNewRowIndexesState:
     {
-        Q_ASSERT(PL_cons_functor(ans,m_state->m_setBottomBordersF,m_state->lastRowT(),rowT));
+        if(!PL_cons_functor(ans,m_state->m_setBottomBordersF,m_state->lastRowT(),rowT))
+            Q_ASSERT(false);
 
-        Q_ASSERT(PL_call(ans,NULL));
+        if(!PL_call(ans,NULL))
+            Q_ASSERT(false);
 
         QVector<Cell> row;
 
@@ -395,9 +405,11 @@ void MainWindow::makeStep(bool lock)
     }
     case GenerationState::lastBodySetBottomBordersState:
     {
-        Q_ASSERT(PL_cons_functor(ans,m_state->m_newRowIndexesF,m_state->lastRowT(),rowT));
+        if(!PL_cons_functor(ans,m_state->m_newRowIndexesF,m_state->lastRowT(),rowT))
+            Q_ASSERT(false);
 
-        Q_ASSERT(PL_call(ans,NULL));
+        if(!PL_call(ans,NULL))
+            Q_ASSERT(false);
 
         QVector<Cell> row;
 
@@ -412,9 +424,11 @@ void MainWindow::makeStep(bool lock)
     case GenerationState::finishNewRowIndexesState:
     {
         functor_t f = PL_new_functor(PL_new_atom("finishRowH"),2);
-        Q_ASSERT(PL_cons_functor(ans,f,m_state->lastRowT(),rowT));
+        if(!PL_cons_functor(ans,f,m_state->lastRowT(),rowT))
+            Q_ASSERT(false);
 
-        Q_ASSERT(PL_call(ans,NULL));
+        if(!PL_call(ans,NULL))
+            Q_ASSERT(false);
 
         QVector<Cell> row;
 
@@ -535,15 +549,22 @@ term_t MainWindow::row_to_term(const QVector<Cell> &row)
                 bottomBorderT = PL_new_term_ref(),
                 ansT = PL_new_term_ref();
 
-        Q_ASSERT(cell.euler);
-        Q_ASSERT(PL_put_integer(indexT,cell.index));
-        Q_ASSERT(PL_put_atom_chars(rightBorderT,(cell.right)?"y":"n"));
-        Q_ASSERT(PL_put_atom_chars(bottomBorderT,(cell.bottom)?"y":"n"));
+        if(!cell.euler)
+            Q_ASSERT(false);
+        if(!PL_put_integer(indexT,cell.index))
+            Q_ASSERT(false);
+        if(!PL_put_atom_chars(rightBorderT,(cell.right)?"y":"n"))
+            Q_ASSERT(false);
+        if(!PL_put_atom_chars(bottomBorderT,(cell.bottom)?"y":"n"))
+            Q_ASSERT(false);
 
-        Q_ASSERT(PL_cons_functor(ansT,makeEulerCellF,indexT,rightBorderT,bottomBorderT,h));
-        Q_ASSERT(PL_call(ansT,NULL));
+        if(!PL_cons_functor(ansT,makeEulerCellF,indexT,rightBorderT,bottomBorderT,h))
+            Q_ASSERT(false);
+        if(!PL_call(ansT,NULL))
+            Q_ASSERT(false);
 
-        Q_ASSERT(PL_cons_list(l,h,l));
+        if(!PL_cons_list(l,h,l))
+            Q_ASSERT(false);
     }
     return l;
 }
@@ -687,8 +708,10 @@ void MainWindow::initScene()
 void MainWindow::on_actionRun_triggered()
 {
     qDebug() << "on_actionRun_triggered "<< m_runParamsSlider->value();
-    Q_ASSERT(!m_timer.isNull());
-    Q_ASSERT(ui->actionInteractive->isChecked());
+    if(!!m_timer.isNull())
+        Q_ASSERT(false);
+    if(!ui->actionInteractive->isChecked())
+        Q_ASSERT(false);
     m_timer->stop();
     if(ui->actionRun->isChecked() && m_state && m_state->state() != GenerationState::completedState)
         m_timer->start(1000.0 / m_runParamsSlider->value());
@@ -696,7 +719,8 @@ void MainWindow::on_actionRun_triggered()
 
 void MainWindow::onStateChanged(GenerationState::State state)
 {
-    Q_ASSERT(!m_timer.isNull());
+    if(!!m_timer.isNull())
+        Q_ASSERT(false);
     if(state == GenerationState::completedState)
         m_timer->stop();
 }
