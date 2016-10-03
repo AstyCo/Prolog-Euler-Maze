@@ -10,7 +10,7 @@
 int main(int argc, char *argv[])
 {
     try{
-        char env[] = "SWI_HOME_DIR=D:\\Soft\\Prolog\\swipl32";
+        char env[] = "SWI_HOME_DIR=C:\\Soft\\swipl32";
         putenv(env);
         char * av []  =  {(char*)("libpl.dll"), NULL} ;
         qDebug()<<env;

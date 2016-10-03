@@ -277,8 +277,13 @@ void MainWindow::makeStep(bool lock)
 {
 //    qDebug()<< "started";
 
-    if(!ui->actionInteractive->isChecked());
+    fid_t fid = PL_open_foreign_frame();
+
+    if(!(ui->actionInteractive->isChecked()))
+    {
         Q_ASSERT(false);
+        return;
+    }
     PlCall("consult(\'../Prolog-Euler-Maze/maze.pl\')");
 
     term_t rowT = PL_new_term_ref() ,
@@ -456,7 +461,8 @@ void MainWindow::makeStep(bool lock)
     m_scene->convertRepresentation(true);
     if(lock)
         m_mutex.unlock();
-//    qDebug()<< "finished";
+
+    PL_close_foreign_frame(fid);
 }
 
 MainWindow::MainWindow(QWidget *parent) :
