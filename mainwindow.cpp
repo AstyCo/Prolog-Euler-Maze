@@ -312,7 +312,7 @@ void MainWindow::makeStep(bool lock)
         if(!PL_cons_functor(ans,f,rT,cT,inT,outT))
             Q_ASSERT(false);
         if(!PL_call(ans,NULL))
-
+            Q_ASSERT(false);
 
 
         read_entrace(inT,in);
@@ -375,11 +375,19 @@ void MainWindow::makeStep(bool lock)
                 m_mutex.unlock();
             return;
         }
-        if(!PL_cons_functor(ans,m_state->m_newRowIndexesF,m_state->lastRowT(),rowT))
+//        if(!PL_cons_functor(ans,m_state->m_newRowIndexesF,m_state->lastRowT(),rowT))
+//            Q_ASSERT(false);
+
+        term_t t0 = PL_new_term_refs(2),
+                t1 = t0 + 1;
+        t0 = PL_copy_term_ref(m_state->lastRowT());
+        t1 = PL_copy_term_ref(rowT);
+        predicate_t p = PL_pred(m_state->m_newRowIndexesF,NULL);
+        if(!PL_call_predicate(NULL,PL_Q_NORMAL,p,t0))
             Q_ASSERT(false);
 
-        if(!PL_call(ans,NULL))
-            Q_ASSERT(false);
+//        if(!PL_call(ans,NULL))
+//            Q_ASSERT(false);
         QVector<Cell> row;
 
         read_euler_row(rowT,row,m_scene->objectsSize());
@@ -392,10 +400,18 @@ void MainWindow::makeStep(bool lock)
     }
     case GenerationState::bodyNewRowIndexesState:
     {
-        if(!PL_cons_functor(ans,m_state->m_setBottomBordersF,m_state->lastRowT(),rowT))
-            Q_ASSERT(false);
+//        if(!PL_cons_functor(ans,m_state->m_setBottomBordersF,m_state->lastRowT(),rowT))
+//            Q_ASSERT(false);
 
-        if(!PL_call(ans,NULL))
+//        if(!PL_call(ans,NULL))
+//            Q_ASSERT(false);
+
+        term_t t0 = PL_new_term_refs(2),
+                t1 = t0 + 1;
+        t0 = PL_copy_term_ref(m_state->lastRowT());
+        t1 = PL_copy_term_ref(rowT);
+        predicate_t p = PL_pred(m_state->m_setBottomBordersF,NULL);
+        if(!PL_call_predicate(NULL,PL_Q_NORMAL,p,t0))
             Q_ASSERT(false);
 
         QVector<Cell> row;
@@ -628,7 +644,7 @@ void MainWindow::installMenus()
 
     m_runParamsSlider->setOrientation(Qt::Horizontal);
     m_runParamsSlider->setMinimum(1);
-    m_runParamsSlider->setMaximum(10);
+    m_runParamsSlider->setMaximum(30);
     connect(m_runParamsSlider,SIGNAL(sliderMoved(int)),this,SLOT(on_actionRun_triggered()));
 
     QVBoxLayout *gs_layout = new QVBoxLayout;
