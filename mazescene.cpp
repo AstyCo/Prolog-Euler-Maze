@@ -8,6 +8,7 @@ MazeScene::MazeScene(QObject * parent):
 {
     m_rows = m_columns = 0;
     _hiddenPath = true;
+    setItemIndexMethod(QGraphicsScene::NoIndex);
 }
 
 void MazeScene::initScene(int rows, int columns)
