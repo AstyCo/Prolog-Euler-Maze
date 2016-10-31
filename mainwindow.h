@@ -40,11 +40,13 @@ public:
     static void read_euler_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<Cell > > &matrix);
     static void read_euler_row(term_t rowT,QVector<Cell> &row, int row_index);
     static void read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, QVector<QVector<Cell > > &matrix);
+    static QSet<QPair<int,int> > readPath(term_t pathT);
     static QString pl_display(term_t t);
     static QVector<QVector<Cell> > &convertRepresentation(QVector<QVector<Cell > >& matrix);
 
 public slots:
     void initState();
+    bool showPath(bool) const;
 
 private slots:
     void makeStep(bool lock = true);
@@ -56,9 +58,12 @@ private slots:
     void on_actionRun_triggered();
     void onStateChanged(GenerationState::State);
 
+
+
 private:
     void initScene();
     void installMenus();
+    QSet<QPair<int,int> > getPath(term_t maze) const;
 
 
 

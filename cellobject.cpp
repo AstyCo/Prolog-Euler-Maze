@@ -39,7 +39,7 @@ void CellObject::paint(QPainter *painter, const QStyleOptionGraphicsItem *option
         return;
 
     QBrush bgBrush;
-    if(m_scene->isEntrace(m_cell.pos()))
+    if(m_scene->isEntrace(m_cell.pos()) || m_scene->onPath(qMakePair(cell().c,cell().r)))
         bgBrush = QBrush(Qt::red);
     else
         bgBrush = mazeBrush;

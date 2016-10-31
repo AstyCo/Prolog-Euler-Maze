@@ -92,13 +92,16 @@ void MainWindow::read_euler_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>&
     if(!PL_get_arg(1,mazeT,inT))
         Q_ASSERT(false);
     read_entrace(inT,in);
+//    qDebug() <<"in "<<in;
 
     if(!PL_get_arg(2,mazeT,outT))
         Q_ASSERT(false);
     read_entrace(outT,out);
+//    qDebug() <<"out "<<out;
 
     if(!PL_get_arg(3,mazeT,matrixLT))
         Q_ASSERT(false);
+
 
     {
         term_t head = PL_new_term_ref();
@@ -112,6 +115,7 @@ void MainWindow::read_euler_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>&
             ++i;
         }
     }
+//    qDebug()<<"maze "<<matrix;
 }
 
 void MainWindow::read_euler_row(term_t head, QVector<Cell> &row,int row_index)
@@ -138,6 +142,7 @@ void MainWindow::read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, 
     if(!PL_get_arg(1,mazeT,inT))
         Q_ASSERT(false);
     read_entrace(inT,in);
+
 
     if(!PL_get_arg(2,mazeT,outT))
         Q_ASSERT(false);
@@ -172,6 +177,35 @@ void MainWindow::read_maze(term_t mazeT,QPair<int,int>&in, QPair<int,int>& out, 
             ++i;
         }
     }
+}
+
+QSet<QPair<int, int> > MainWindow::readPath(term_t pathT)
+{
+    QSet<QPair<int,int> > res;
+
+//    qDebug()<<"***"<<pl_display(pathT)<<"***";
+
+    term_t head = PL_new_term_ref();   /* the elements */
+    term_t list = PL_copy_term_ref(pathT); /* copy (we modify list) */
+
+    while( PL_get_list(list, head, list) )
+    {
+        term_t head1 = PL_new_term_ref();
+        term_t rest = PL_copy_term_ref(head);
+        QPair<int,int> cell;
+
+        if(!PL_get_list(rest, head1, rest))
+            Q_ASSERT(false);
+        if(!PL_get_integer(head1,&(cell.first)))
+            Q_ASSERT(false);
+        if(!PL_get_list(rest, head1, rest))
+            Q_ASSERT(false);
+        if(!PL_get_integer(head1,&(cell.second)))
+            Q_ASSERT(false);
+
+        res.insert(cell);
+    }
+    return res;
 }
 
 QString MainWindow::pl_display(term_t t)
@@ -496,6 +530,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionMake_step,SIGNAL(triggered(bool)),this,SLOT(makeStep()));
     connect(m_state,SIGNAL(stateChanged(GenerationState::State)),this,SLOT(onStateChanged(GenerationState::State)));
     connect(m_timer,SIGNAL(timeout()),this,SLOT(makeStep()));
+    connect(ui->actionShowPath,SIGNAL(triggered(bool)),this,SLOT(showPath(bool)));
     initScene();
     installMenus();
 }
@@ -518,6 +553,8 @@ void MainWindow::generateMaze()
     {
         QPair<int,int> in, out;
         QVector<QVector<Cell > > matrix;
+
+        m_scene->setPath(getPath(maze));
 
         read_euler_maze(maze, in, out, matrix);
 
@@ -666,6 +703,36 @@ void MainWindow::installMenus()
 
 }
 
+QSet<QPair<int, int> > MainWindow::getPath(term_t mazeT) const
+{
+    term_t ans = PL_new_term_ref();
+    term_t inT = PL_new_term_ref(),outT = PL_new_term_ref(),matrixLT = PL_new_term_ref(),
+            pathT = PL_new_term_ref();
+
+    if(!PL_get_arg(1,mazeT,inT))
+        Q_ASSERT(false);
+
+    if(!PL_get_arg(2,mazeT,outT))
+        Q_ASSERT(false);
+
+    if(!PL_get_arg(3,mazeT,matrixLT))
+        Q_ASSERT(false);
+
+    functor_t findPathF = PL_new_functor(PL_new_atom("eulerFindPath"),4);
+    if(!PL_cons_functor(ans,findPathF,inT,outT,matrixLT,pathT))
+        Q_ASSERT(false);
+
+    if(PL_call(ans,NULL))
+    {
+        return readPath(pathT);
+    }
+    else
+    {
+        qDebug() << "failed on constructing path";
+        return QSet<QPair<int,int> >();
+    }
+}
+
 void MainWindow::initState()
 {
     if(ui->actionInteractive->isChecked())
@@ -684,15 +751,31 @@ void MainWindow::initState()
         m_timer->stop();
 }
 
+bool MainWindow::showPath(bool checked) const
+{
+    if(checked)
+    {
+
+
+        m_scene->setHiddenPath(false);
+    }
+    else
+    {
+        m_scene->setHiddenPath(true);
+    }
+}
+
 void MainWindow::on_actionInteractive_toggled(bool val)
 {
     if(val)
     {
+        ui->toolBar->removeAction(ui->actionShowPath);
         ui->toolBar->addAction(ui->actionRun);
         ui->toolBar->addAction(ui->actionMake_step);
     }
     else
     {
+        ui->toolBar->addAction(ui->actionShowPath);
         ui->toolBar->removeAction(ui->actionRun);
         ui->toolBar->removeAction(ui->actionMake_step);
     }
@@ -702,6 +785,9 @@ void MainWindow::on_actionInteractive_toggled(bool val)
 
 void MainWindow::on_actionRe_triggered()
 {
+    showPath(false);
+    ui->actionShowPath->setChecked(false);
+
     if(m_timer)
         m_timer->stop();
 
@@ -746,3 +832,4 @@ void MainWindow::onStateChanged(GenerationState::State state)
     if(state == GenerationState::completedState)
         m_timer->stop();
 }
+

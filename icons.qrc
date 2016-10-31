@@ -7,5 +7,6 @@
         <file>resources/updating-arrow.png</file>
         <file>resources/labyrinth.bmp</file>
         <file>resources/euler.bmp</file>
+        <file>resources/path.png</file>
     </qresource>
 </RCC>

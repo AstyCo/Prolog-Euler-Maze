@@ -6,24 +6,31 @@ bordersExample(borders(y,n)).
 %    ¬ данном представлении, границы вокруг лабиринта
 % не учитываютс€. ѕредполагаетс€, что средства отображени€ понимают,
 % как их отрисовывать(зна€ вход/выход/структуру).
-mazeExample( maze(
-% вход	     выход
-  cell(0,0), cell(2,5),
-%    0	          1            2            3            4            5
-  [ [borders(y,n),borders(y,n),borders(n,n),borders(n,n),borders(y,n),borders(n,n)],
-    [borders(y,n),borders(y,n),borders(y,n),borders(y,y),borders(n,y),borders(n,n)],
-    [borders(n,n),borders(y,y),borders(n,n),borders(y,n),borders(y,n),borders(n,y)],
-    [borders(n,y),borders(y,n),borders(y,y),borders(n,n),borders(y,y),borders(n,n)],
-    [borders(n,n),borders(n,n),borders(n,n),borders(n,n),borders(n,n),borders(n,n)]
-])).
 
-eulerCellsRow([ eulerCell(1, cell(n, n)),
+testEntrace3([0,2],[2,0]).
+testMaze3([
+    [cell(n,n),cell(y,y),cell(n,n)],
+    [cell(y,n),cell(n,n),cell(n,y)],
+    [cell(n,n),cell(n,n),cell(n,n)] ]
+    ).
+
+testMaze2([
+    [cell(y,n),cell(n,n)],
+    [cell(n,n),cell(n,n)]]).
+testEntrace2([0,0],[1,0]).
+
+
+
+testEulerCellsRow([ eulerCell(1, cell(n, n)),
 		eulerCell(1, cell(y, n)),
 		eulerCell(2, cell(y, n)),
 		eulerCell(1, cell(n, n)),
 		eulerCell(1, cell(n, n)),
 		eulerCell(1, cell(y, n)),
 		eulerCell(3, cell(n, n)) ]).
+
+testRandomize2([eulerCell(4, cell(n, n)), eulerCell(4, cell(n, n)), eulerCell(4, cell(y, n))]).
+
 
 % main predicates
 %
@@ -117,7 +124,6 @@ setBottomBorders(L, RA):-
 	setBottomBorders(R,R1),
 	append(RG,R1,RA).
 
-testRandomize2([eulerCell(4, cell(n, n)), eulerCell(4, cell(n, n)), eulerCell(4, cell(y, n))]).
 
 %randomizeGroup(?Group,?RandomizedBorderedGroup)
 %
@@ -417,22 +423,92 @@ finishRowH([eulerCell(Index1,_),eulerCell(Index2,cell(Y,_))|Rest],
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 sameIndexCellsH(L,N,C):-notIsEmpty(C),sameIndexCells(L,N,C).
 
 same(L):-maplist(=(_),L).
 notIsEmpty([_]).
+
+inRange(X,Min,Max):-
+	X>=Min,
+	X=<Max.
+
+%isConnected(?[?x1,?y1],?[?x2,?y2],?Max)
+%
+isConnected4(C1,C2,limits(R,C)):-
+	isConnected(C1,C2,R,C).
+isConnected([X1,Y1],[X2,Y2],R,C):-
+	succ(N1,C),
+	(
+	       succ(X2,X1);
+               succ(X1,X2)
+           ),
+	inRange(X1,0,N1),
+	inRange(X2,0,N1),
+	Y1=Y2;
+
+	succ(N1,R),
+	(
+	       succ(Y2,Y1);
+               succ(Y1,Y2)
+	   ),
+	inRange(Y1,0,N1),
+	inRange(Y2,0,N1),
+	X1=X2.
+
+mazeElem(Maze,[X,Y],Elem):-
+	nth0(Y,Maze,Row),nth0(X,Row,Elem).
+
+hasRightBorder(cell(y,_)).
+
+hasBottomBorder(cell(_,y)).
+
+openPath(Maze,[X1,Y1],[X2,Y2]):-
+	(
+	    succ(X1,X2),
+	    mazeElem(Maze,[X1,Y1],Elem);
+	    succ(X2,X1),
+	    mazeElem(Maze,[X2,Y2],Elem) ),
+	\+ hasRightBorder(Elem) ;
+	(   succ(Y1,Y2),
+	    mazeElem(Maze,[X1,Y1],Elem);
+	    succ(Y2,Y1),
+	    mazeElem(Maze,[X2,Y2],Elem) ),
+	\+ hasBottomBorder(Elem).
+
+
+mazeLimits2(Maze,limits(R,C)):-
+	mazeLimits3(Maze,R,C).
+mazeLimits3(Maze,R,C):-
+	length(Maze,R),nth0(0,Maze,Row),length(Row,C).
+
+eulerFindPath(In,Out,EulerMatrix,P):-
+	maplist(maplist(fromEuler),EulerMatrix,Matrix),
+	findPath(In,Out,Matrix,P).
+
+%findPath(?in,?out,?maze,?PathIndexes)
+%
+findPath(In,Out,Maze,[In1|P]):-
+	cellIndexToIndex(In,In1),
+	cellIndexToIndex(Out,Out1),
+	mazeLimits2(Maze,L),
+	findPathH(In1,Out1,(L,Maze),P,[In1]).
+
+cellIndexToIndex(cell(R,C),[C,R]).
+
+%findPathH(?f,?l,?maze,?PI,?visitedIndexes)
+%
+findPathH(In,In,_,[],_):-!.
+findPathH(In,Out,(Limits,Maze),[Next|P],V):-
+	isConnected4(In,Next,Limits),
+	\+ member(Next,V),
+	openPath(Maze,In,Next),
+	findPathH(Next,Out,(Limits,Maze),P,[Next|V])
+	.
+
+comma:-
+	mazeGenerator(30,30,maze(I,O,M)),cellIndexToIndex(I,I1),cellIndexToIndex(O,O1),print('build '),findPath(I1,O1,M,P),print(P).
+
+bugCaseMaze([[cell(y, n), cell(y, n), cell(y, n), cell(n, n)], [cell(n, y), cell(n, y), cell(n, y), cell(n, n)], [cell(n, n), cell(y, n), cell(n, n), cell(n, n)], [cell(y, n), cell(n, n), cell(y, n), cell(n, n)]]).
+bugCaseEntrace(cell(0, 3),cell(3, 0)).
+testComma:-
+	bugCaseMaze(M),bugCaseEntrace(I,O),findPath(I,O,M,P),print(P).

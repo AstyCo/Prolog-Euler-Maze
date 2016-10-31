@@ -7,6 +7,7 @@ MazeScene::MazeScene(QObject * parent):
     QGraphicsScene(parent)
 {
     m_rows = m_columns = 0;
+    _hiddenPath = true;
 }
 
 void MazeScene::initScene(int rows, int columns)
@@ -121,6 +122,13 @@ int MazeScene::objectsCols() const
     return m_objects[0].size();
 }
 
+bool MazeScene::onPath(const QPair<int, int> &index) const
+{
+    if(_hiddenPath)
+        return false;
+    return _path.contains(index);
+}
+
 void MazeScene::updateEntraces()
 {
     foreach(const QVector<QPointer<CellObject> >& row, m_objects)
@@ -196,6 +204,17 @@ void MazeScene::appendRow(const QVector<Cell> &rowC)
     setSceneRect(itemsBoundingRect().adjusted(-2,-2,2,2));
 }
 
+void MazeScene::clearPath()
+{
+    _path.clear();
+}
+
+void MazeScene::setPath(const QSet<QPair<int, int> > &indexes)
+{
+    _path = indexes;
+}
+
+
 void MazeScene::updateEntracesBorders(int row, int column)
 {
     if(row==0)
@@ -214,6 +233,17 @@ void MazeScene::updateEntracesBorders(int row, int column)
     {
         m_objects[row][column]->cell().right = false;
     }
+}
+
+bool MazeScene::hiddenPath() const
+{
+    return _hiddenPath;
+}
+
+void MazeScene::setHiddenPath(bool hiddenPath)
+{
+    _hiddenPath = hiddenPath;
+    update();
 }
 
 void MazeScene::setColumns(int columns)

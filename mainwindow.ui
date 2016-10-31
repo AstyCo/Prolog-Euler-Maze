@@ -61,6 +61,7 @@
    <addaction name="actionRe"/>
    <addaction name="actionRun"/>
    <addaction name="actionMake_step"/>
+   <addaction name="actionShowPath"/>
   </widget>
   <action name="actionGenerate">
    <property name="checkable">
@@ -123,6 +124,21 @@
    </property>
    <property name="text">
     <string>Интерактивная генерация</string>
+   </property>
+  </action>
+  <action name="actionShowPath">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/resources/path.png</normaloff>:/resources/path.png</iconset>
+   </property>
+   <property name="text">
+    <string>Показать путь</string>
+   </property>
+   <property name="toolTip">
+    <string>Показать решение лабиринта</string>
    </property>
   </action>
  </widget>

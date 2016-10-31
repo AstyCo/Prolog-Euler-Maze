@@ -8,6 +8,7 @@
 #include <QPointer>
 
 #include <QMap>
+#include <QSet>
 
 #include "cellobject.h"
 
@@ -39,7 +40,8 @@ public:
     void clearEntraces();
     int objectsSize() const;
     int objectsCols() const;
-
+    bool onPath(const QPair<int,int> &index) const;
+    bool hiddenPath() const;
 
 
 public slots:
@@ -48,6 +50,9 @@ public slots:
     void clear();
     void hideItems();
     void appendRow(const QVector<Cell> &row);
+    void clearPath();
+    void setPath(const QSet<QPair<int,int> > &indexes);
+    void setHiddenPath(bool hiddenPath);
 
 private:
     void updateEntracesBorders(int row, int column);
@@ -56,6 +61,8 @@ private:
     QMap<QPointer<QWidget>,viewMode> m_modes;
     QVector<QVector<QPointer<CellObject> > > m_objects;
     int m_rows,m_columns;
+    QSet<QPair<int,int> > _path;
+    bool _hiddenPath;
 };
 
 #endif // MAZESCENE_H
