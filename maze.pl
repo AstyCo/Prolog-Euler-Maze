@@ -485,6 +485,9 @@ eulerFindPath(In,Out,EulerMatrix,P):-
 	maplist(maplist(fromEuler),EulerMatrix,Matrix),
 	findPath(In,Out,Matrix,P).
 
+
+findPath2(maze(I,O,M),P):-
+	findPath(I,O,M,P).
 %findPath(?in,?out,?maze,?PathIndexes)
 %
 findPath(In,Out,Maze,[In1|P]):-
