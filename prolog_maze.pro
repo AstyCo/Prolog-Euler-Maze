@@ -6,10 +6,14 @@
 
 QT       += core gui
 
+CONFIG += exceptions static
+
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
 TARGET = prolog_maze
 TEMPLATE = app
+
+message(lib-path: "$$PWD/lib")
 
 LIBS += -L"$$PWD/lib" -lswipl -lgcc_s_sjlj-1 -lgmp-10 -lwinpthread-1
 INCLUDEPATH += "$$PWD/include"
@@ -23,7 +27,8 @@ SOURCES += main.cpp\
     parameterswidgetaction.cpp \
     mazeview.cpp \
     generationstate.cpp \
-    prolog.cpp
+    prolog.cpp \
+    swipl32inputdialog.cpp
 
 HEADERS  += mainwindow.h \
     mazescene.h \
@@ -33,10 +38,12 @@ HEADERS  += mainwindow.h \
     parameterswidgetaction.h \
     mazeview.h \
     generationstate.h \
-    prolog.h
+    prolog.h \
+    swipl32inputdialog.h
 
 FORMS    += mainwindow.ui \
-    parameterswidget.ui
+    parameterswidget.ui \
+    swipl32inputdialog.ui
 
 RESOURCES += \
     icons.qrc
