@@ -74,7 +74,6 @@ private:
     QPointer<ParametersWidget> m_paramWidget;
     QPointer<QSlider> m_runParamsSlider;
     QPointer<QTimer> m_timer;
-    QMutex m_mutex;
 };
 
 #endif // MAINWINDOW_H
