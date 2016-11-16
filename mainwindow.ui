@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>915</width>
+    <height>569</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QGridLayout" name="gridLayout">
+    <item row="0" column="0">
+     <widget class="QSplitter" name="splitter">
+      <property name="orientation">
+       <enum>Qt::Horizontal</enum>
+      </property>
+      <widget class="MazeView" name="graphicsView1"/>
+      <widget class="MazeView" name="graphicsView2"/>
+     </widget>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>915</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuParameters">
+    <property name="title">
+     <string>Параметры</string>
+    </property>
+    <addaction name="actionInteractive"/>
+    <addaction name="separator"/>
+   </widget>
+   <addaction name="menuParameters"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QToolBar" name="toolBar">
+   <property name="windowTitle">
+    <string>toolBar</string>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonTextBesideIcon</enum>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionRe"/>
+   <addaction name="actionRun"/>
+   <addaction name="actionMake_step"/>
+   <addaction name="actionShowPath"/>
+  </widget>
+  <action name="actionGenerate">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Сгенерировать...</string>
+   </property>
+  </action>
+  <action name="actionInteractiveGeneration">
+   <property name="text">
+    <string>Интерактивная генерация...</string>
+   </property>
+  </action>
+  <action name="actionRun">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/resources/play.png</normaloff>:/resources/play.png</iconset>
+   </property>
+   <property name="text">
+    <string>Запустить</string>
+   </property>
+   <property name="autoRepeat">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionMake_step">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/resources/step.png</normaloff>:/resources/step.png</iconset>
+   </property>
+   <property name="text">
+    <string>Сделать шаг</string>
+   </property>
+  </action>
+  <action name="actionRe">
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/resources/updating-arrow.png</normaloff>:/resources/updating-arrow.png</iconset>
+   </property>
+   <property name="text">
+    <string>Новый</string>
+   </property>
+   <property name="autoRepeat">
+    <bool>false</bool>
+   </property>
+  </action>
+  <action name="actionInteractive">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="text">
+    <string>Интерактивная генерация</string>
+   </property>
+  </action>
+  <action name="actionShowPath">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="icons.qrc">
+     <normaloff>:/resources/path.png</normaloff>:/resources/path.png</iconset>
+   </property>
+   <property name="text">
+    <string>Показать путь</string>
+   </property>
+   <property name="toolTip">
+    <string>Показать решение лабиринта</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>MazeView</class>
+   <extends>QGraphicsView</extends>
+   <header>mazeview.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="icons.qrc"/>
+ </resources>
+ <connections/>
+</ui>
